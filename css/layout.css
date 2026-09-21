@@ -201,6 +201,9 @@
   transform: translateX(4px);
 }
 
+/* 页脚社交按钮：当前模板未使用（页脚只放了仓库链接和反馈按钮），
+   保留样式供需要时启用——在各页 footer 里加：
+   <div class="footer-social"><a class="social-link" href="…" aria-label="…">…</a></div> */
 .footer-social {
   display: flex;
   gap: var(--spacing-md);

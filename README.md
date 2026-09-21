@@ -6,6 +6,31 @@
 
 ---
 
+## 界面预览
+
+**番茄钟** —— 计时、任务、白噪音、沉浸模式都在这一个页面里：
+
+![番茄钟](screenshots/pomodoro.png)
+
+**六个工具**：
+
+| | | |
+|---|---|---|
+| ![仪表盘](screenshots/dashboard.png) | ![秒表](screenshots/stopwatch.png) | ![多组倒计时](screenshots/countdown.png) |
+| **仪表盘**：实时时钟 + 工具入口 + 今日番茄数 | **秒表**：毫秒计时，圈速自动标最快/最慢 | **多组倒计时**：多个倒计时并行管理 |
+| ![世界时钟](screenshots/worldclock.png) | ![截止倒计时](screenshots/deadline.png) | ![呼吸训练](screenshots/breathing-dark.png) |
+| **世界时钟**：多城市时间 + 时差 + 转换器 | **截止倒计时**：重要日期与进度可视化 | **呼吸训练**：4-7-8 / 方形 / 自定义 |
+
+**深色主题**与**手机端**（深色可跟随系统，也可手动三态切换）：
+
+| 深色主题 | 手机端 |
+|---|---|
+| ![深色主题](screenshots/pomodoro-dark.png) | ![手机端](screenshots/mobile-pomodoro.png) |
+
+> 截图取自真实运行状态，可直接对照 [v1.1.0](CHANGELOG.md) 的实际界面。
+
+---
+
 ## 功能
 
 | 工具 | 说明 |
@@ -34,7 +59,7 @@
 因为用了 Service Worker，需要经由 HTTP 访问（直接双击 HTML 文件无法注册 SW）：
 
 ```bash
-git clone <本仓库地址> timehub && cd timehub
+git clone https://github.com/Charlielyo/TimeHub.git timehub && cd timehub
 python3 -m http.server 8000
 ```
 
@@ -82,6 +107,7 @@ TimeHub/
 │   └── breathing.js        呼吸训练逻辑
 │
 ├── assets/icons/           SVG 图标 + PWA 用的 PNG 图标
+├── screenshots/            README 用的界面截图（不参与站点运行，可安全删除）
 ├── manifest.json           PWA 清单
 ├── sw.js                   Service Worker（缓存策略说明见文件开头）
 ├── DEPLOY.md               部署指南
