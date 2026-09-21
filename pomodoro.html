@@ -1,0 +1,1832 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>番茄钟 - TimeHub</title>
+  <meta name="description" content="TimeHub番茄钟工具，使用番茄工作法提高生产力：25分钟专注，5分钟短休息，15分钟长休息。">
+  <meta name="keywords" content="番茄钟,番茄工作法,专注,时间管理,生产力">
+  <meta name="author" content="TimeHub Team">
+
+  <!-- 样式表 -->
+  <link rel="stylesheet" href="css/base.css">
+  <link rel="stylesheet" href="css/layout.css">
+  <link rel="stylesheet" href="css/components.css">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@300;400;500&display=swap">
+
+  <!-- 图标 -->
+  <link rel="icon" href="assets/icons/pomodoro.svg" type="image/svg+xml">
+
+  <!-- iOS 支持 -->
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <link rel="apple-touch-icon" href="assets/icons/pomodoro.svg">
+
+  <!-- PWA 相关 -->
+  <meta name="theme-color" content="#C0392B">
+  <link rel="manifest" href="manifest.json" crossorigin="use-credentials">
+
+  <!-- 番茄钟特定样式 -->
+  <style>
+    :root {
+      --pomodoro-color: #f72585;    /* 专注模式颜色 - 红色系 */
+      --short-break-color: #4cc9f0;  /* 短休息颜色 - 蓝色系 */
+      --long-break-color: #38b000;   /* 长休息颜色 - 绿色系 */
+      --c: var(--pomodoro-color);    /* 当前模式颜色变量 */
+    }
+
+    .pomodoro-page {
+      --current-color: var(--c);
+      --current-color-rgb: 247, 37, 133; /* 默认红色系，将通过JS动态更新 */
+    }
+
+    /* 主内容布局 */
+    .pomodoro-main {
+      flex: 1;
+      padding: var(--spacing-xl) 0;
+    }
+
+    .pomodoro-container {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: var(--spacing-xxl);
+      max-width: var(--max-width);
+      margin: 0 auto;
+      padding: 0 var(--spacing-md);
+    }
+
+    /* 左侧计时器区域 */
+    .timer-section {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: var(--spacing-xl);
+    }
+
+    /* 模式切换Tab */
+    .mode-tabs {
+      display: flex;
+      gap: var(--spacing-md);
+      background: var(--surface-color);
+      border-radius: var(--border-radius-lg);
+      padding: var(--spacing-sm);
+      border: 1px solid var(--border-color);
+    }
+
+    .mode-tab {
+      flex: 1;
+      padding: var(--spacing-md) var(--spacing-lg);
+      border-radius: var(--border-radius-md);
+      font-weight: 600;
+      text-align: center;
+      cursor: pointer;
+      transition: all var(--transition-fast);
+      border: 2px solid transparent;
+      background: transparent;
+      color: var(--text-secondary);
+      white-space: normal;
+      min-width: 60px;
+      overflow: visible;
+      word-break: break-word;
+      hyphens: auto;
+      line-height: 1.3;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .mode-tab:hover {
+      background: rgba(0, 0, 0, 0.08);
+      color: var(--text-color);
+    }
+
+    .mode-tab.active {
+      background: var(--current-color);
+      color: white;
+      border-color: var(--current-color);
+      font-weight: 700;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    }
+
+    @media (prefers-color-scheme: dark) {
+      .mode-tab:hover {
+        background: rgba(255, 255, 255, 0.15);
+        color: white;
+      }
+    }
+
+    /* 计时器显示区域 */
+    .timer-display {
+      position: relative;
+      width: 300px;
+      height: 300px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .progress-ring {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      transform: rotate(-90deg);
+    }
+
+    .progress-ring-bg {
+      fill: none;
+      stroke: var(--border-color);
+      stroke-width: 8;
+    }
+
+    .progress-ring-fill {
+      fill: none;
+      stroke: var(--current-color);
+      stroke-width: 8;
+      stroke-linecap: round;
+      stroke-dasharray: 552.92; /* 2 * π * r (r=88) */
+      stroke-dashoffset: 552.92;
+      transition: stroke-dashoffset 1s linear;
+    }
+
+    .time-display {
+      position: relative;
+      z-index: 1;
+      text-align: center;
+    }
+
+    .time-text {
+      font-family: 'DM Mono', monospace;
+      font-size: 4.5rem;
+      font-weight: 500;
+      color: var(--text-color);
+      line-height: 1;
+      margin-bottom: var(--spacing-sm);
+      letter-spacing: -0.02em;
+    }
+
+    .mode-label {
+      font-size: 1.5rem;
+      font-weight: 600;
+      color: var(--current-color);
+      margin: 0;
+    }
+
+    /* 控制按钮 */
+    .control-buttons {
+      display: flex;
+      gap: var(--spacing-md);
+      margin-top: var(--spacing-md);
+    }
+
+    .control-btn {
+      min-width: 120px;
+      padding: var(--spacing-md) var(--spacing-xl);
+      font-size: 1.125rem;
+      font-weight: 600;
+    }
+
+    .control-btn-start {
+      background-color: var(--current-color);
+      color: white;
+    }
+
+    .control-btn-start:hover {
+      background-color: var(--current-color);
+      filter: brightness(1.2);
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+      text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+    }
+
+    /* 番茄组进度点 */
+    .tomato-group {
+      display: flex;
+      gap: var(--spacing-md);
+      margin-top: var(--spacing-xl);
+    }
+
+    .tomato-dot {
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+      background-color: var(--border-color);
+      transition: background-color var(--transition-fast);
+    }
+
+    .tomato-dot.filled {
+      background-color: var(--current-color);
+    }
+
+    /* 左侧白噪音控制条 */
+    .ambient-bar {
+      display: flex;
+      align-items: center;
+      gap: var(--spacing-md);
+      margin-top: var(--spacing-xl);
+      padding: var(--spacing-md) var(--spacing-lg);
+      background: var(--surface-color);
+      border-radius: var(--border-radius-lg);
+      border: 1px solid var(--border-color);
+    }
+
+    .ambient-options {
+      display: flex;
+      gap: var(--spacing-xs);
+    }
+
+    .ambient-option {
+      width: 36px;
+      height: 36px;
+      border-radius: var(--border-radius-md);
+      border: 2px solid var(--border-color);
+      background: var(--bg-color);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.125rem;
+      transition: all var(--transition-fast);
+    }
+
+    .ambient-option:hover {
+      border-color: var(--current-color);
+      transform: translateY(-1px);
+    }
+
+    .ambient-option.active {
+      border-color: var(--current-color);
+      background: var(--current-color);
+    }
+
+    .ambient-volume {
+      display: flex;
+      align-items: center;
+      gap: var(--spacing-sm);
+      flex: 1;
+    }
+
+    .ambient-volume input {
+      flex: 1;
+      min-width: 80px;
+    }
+
+    .zen-btn {
+      padding: var(--spacing-sm) var(--spacing-md);
+      border-radius: var(--border-radius-md);
+      border: 1px solid var(--border-color);
+      background: var(--bg-color);
+      color: var(--text-color);
+      cursor: pointer;
+      font-size: 0.875rem;
+      font-weight: 600;
+      transition: all var(--transition-fast);
+      white-space: nowrap;
+    }
+
+    .zen-btn:hover {
+      border-color: var(--current-color);
+      color: var(--current-color);
+    }
+
+    /* 沉浸模式 */
+    .zen-overlay {
+      position: fixed;
+      inset: 0;
+      background: #050505;
+      z-index: 1000;
+      display: none;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      color: #fff;
+    }
+
+    .zen-overlay.active {
+      display: flex;
+    }
+
+    .zen-clock {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-family: 'DM Mono', monospace;
+      font-size: 18vw;
+      font-weight: 500;
+      line-height: 1;
+    }
+
+    .zen-digit-box {
+      background: #111;
+      border-radius: 12px;
+      padding: 20px 16px;
+      min-width: 0.85em;
+      text-align: center;
+      border: 1px solid #222;
+    }
+
+    .zen-sep {
+      opacity: 0.4;
+      animation: blink 1s infinite;
+    }
+
+    @keyframes blink {
+      0%, 100% { opacity: 0.4; }
+      50% { opacity: 1; }
+    }
+
+    .zen-progress {
+      position: absolute;
+      bottom: 100px;
+      left: 15%;
+      width: 70%;
+      height: 4px;
+      background: rgba(255,255,255,0.1);
+      border-radius: 2px;
+      overflow: hidden;
+    }
+
+    .zen-progress-fill {
+      height: 100%;
+      background: var(--current-color);
+      transition: width 1s linear;
+    }
+
+    .zen-info {
+      position: absolute;
+      bottom: 48px;
+      color: #888;
+      font-size: 1rem;
+      display: flex;
+      align-items: center;
+      gap: var(--spacing-md);
+    }
+
+    .zen-close {
+      position: absolute;
+      top: 24px;
+      right: 24px;
+      background: none;
+      border: 1px solid #444;
+      color: #fff;
+      padding: 8px 16px;
+      border-radius: var(--border-radius-md);
+      cursor: pointer;
+      font-size: 0.875rem;
+      transition: all var(--transition-fast);
+    }
+
+    .zen-close:hover {
+      border-color: #fff;
+      background: rgba(255,255,255,0.1);
+    }
+
+    /* 响应式调整 */
+    @media (max-width: 768px) {
+      .zen-clock {
+        font-size: 22vw;
+      }
+
+      .ambient-bar {
+        flex-wrap: wrap;
+        justify-content: center;
+      }
+
+      .ambient-volume {
+        width: 100%;
+        order: 3;
+      }
+    }
+
+    /* 右侧面板区域 */
+    .panel-section {
+      background: var(--surface-color);
+      border-radius: var(--border-radius-lg);
+      border: 1px solid var(--border-color);
+      padding: var(--spacing-xl);
+      display: flex;
+      flex-direction: column;
+      gap: var(--spacing-xl);
+    }
+
+    .panel-header {
+      text-align: center;
+    }
+
+    .panel-title {
+      font-size: 1.5rem;
+      font-weight: 700;
+      color: var(--text-color);
+      margin: 0 0 var(--spacing-xs) 0;
+    }
+
+    .panel-subtitle {
+      font-size: 1rem;
+      color: var(--text-secondary);
+      margin: 0;
+    }
+
+    .panel-placeholder {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: var(--bg-color);
+      border-radius: var(--border-radius-md);
+      border: 2px dashed var(--border-color);
+      padding: var(--spacing-xxl);
+      text-align: center;
+    }
+
+    .placeholder-text {
+      color: var(--text-secondary);
+      font-size: 1.125rem;
+    }
+
+    /* 响应式设计 */
+    @media (max-width: 1024px) {
+      .pomodoro-container {
+        grid-template-columns: 1fr;
+        gap: var(--spacing-xl);
+      }
+
+      .timer-display {
+        width: 280px;
+        height: 280px;
+      }
+
+      .time-text {
+        font-size: 4rem;
+      }
+    }
+
+    @media (max-width: 768px) {
+      .timer-display {
+        width: 250px;
+        height: 250px;
+      }
+
+      .time-text {
+        font-size: 3.5rem;
+      }
+
+      .control-buttons {
+        flex-direction: column;
+        width: 100%;
+        max-width: 300px;
+      }
+
+      .control-btn {
+        width: 100%;
+      }
+
+      .mode-tabs {
+        flex-direction: row;
+        flex-wrap: wrap;
+        gap: var(--spacing-sm);
+      }
+
+      .mode-tab {
+        flex: 0 0 calc(33.333% - var(--spacing-sm));
+        padding: var(--spacing-sm) var(--spacing-xs);
+        font-size: 0.9rem;
+        white-space: normal;
+        overflow: visible;
+        word-break: break-word;
+        hyphens: auto;
+        min-width: 50px;
+        min-height: 44px;
+        line-height: 1.3;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        text-align: center;
+      }
+    }
+
+    @media (max-width: 480px) {
+      .timer-display {
+        width: 220px;
+        height: 220px;
+      }
+
+      .time-text {
+        font-size: 3rem;
+      }
+
+      .mode-label {
+        font-size: 1.25rem;
+      }
+
+      .mode-tab {
+        flex: 0 0 calc(50% - var(--spacing-sm));
+        font-size: 0.85rem;
+        padding: var(--spacing-sm) var(--spacing-xs);
+        min-height: 40px;
+        line-height: 1.3;
+        word-break: break-word;
+        hyphens: auto;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        text-align: center;
+      }
+    }
+
+    /* ===== 右侧面板样式 ===== */
+
+    .panel-card {
+      background: var(--surface-color);
+      border-radius: var(--border-radius-lg);
+      border: 1px solid var(--border-color);
+      padding: var(--spacing-lg);
+      margin-bottom: var(--spacing-lg);
+    }
+
+    .panel-card:last-child {
+      margin-bottom: 0;
+    }
+
+    .panel-card-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: var(--spacing-md);
+    }
+
+    .panel-card-title {
+      font-size: 1.25rem;
+      font-weight: 700;
+      color: var(--text-color);
+      margin: 0;
+    }
+
+    .panel-card-description {
+      font-size: 0.875rem;
+      color: var(--text-secondary);
+      margin: 0 0 var(--spacing-md) 0;
+    }
+
+    /* 任务列表样式 */
+    .task-input-container {
+      margin-bottom: var(--spacing-md);
+    }
+
+    .task-input {
+      width: 100%;
+      padding: var(--spacing-sm) var(--spacing-md);
+      border: 2px solid var(--border-color);
+      border-radius: var(--border-radius-md);
+      font-size: 1rem;
+      transition: border-color var(--transition-fast);
+      background: var(--bg-color);
+      color: var(--text-color);
+    }
+
+    .task-input:focus {
+      outline: none;
+      border-color: var(--current-color);
+    }
+
+    .task-input-actions {
+      display: flex;
+      gap: var(--spacing-sm);
+      margin-top: var(--spacing-sm);
+    }
+
+    .task-list {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+      max-height: 200px;
+      overflow-y: auto;
+    }
+
+    .task-item {
+      display: flex;
+      align-items: center;
+      padding: var(--spacing-sm) var(--spacing-md);
+      border-radius: var(--border-radius-md);
+      background: var(--bg-color);
+      margin-bottom: var(--spacing-sm);
+      border: 1px solid var(--border-color);
+      transition: all var(--transition-fast);
+    }
+
+    .task-item:hover {
+      border-color: var(--current-color);
+    }
+
+    .task-item.empty-task {
+      justify-content: center;
+      color: var(--text-secondary);
+      font-style: italic;
+    }
+
+    .task-item.completed {
+      opacity: 0.7;
+      text-decoration: line-through;
+    }
+
+    .task-item.active {
+      border-color: var(--current-color);
+      border-width: 2px;
+      background: rgba(var(--current-color-rgb, 247, 37, 133), 0.05);
+    }
+
+    .task-main {
+      display: flex;
+      align-items: flex-start;
+      flex: 1;
+      gap: var(--spacing-sm);
+      cursor: pointer;
+    }
+
+    .task-content {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      gap: var(--spacing-xs);
+    }
+
+    .task-meta {
+      display: flex;
+      gap: var(--spacing-sm);
+      align-items: center;
+    }
+
+    .task-category-badge {
+      font-size: 0.75rem;
+      padding: 2px 6px;
+      background: var(--surface-color);
+      border-radius: 10px;
+      color: var(--text-secondary);
+      border: 1px solid var(--border-color);
+    }
+
+    .task-tomato-count {
+      font-size: 0.75rem;
+      color: var(--current-color);
+      font-weight: 600;
+    }
+
+    .task-checkbox {
+      margin-right: var(--spacing-sm);
+      cursor: pointer;
+    }
+
+    .task-text {
+      flex: 1;
+      font-size: 0.9375rem;
+    }
+
+    .task-remove {
+      color: var(--error-color);
+      background: none;
+      border: none;
+      cursor: pointer;
+      font-size: 1.125rem;
+      padding: 0;
+      opacity: 0.5;
+      transition: opacity var(--transition-fast);
+    }
+
+    .task-remove:hover {
+      opacity: 1;
+    }
+
+    /* 白噪音样式 */
+    .white-noise-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: var(--spacing-sm);
+      margin-bottom: var(--spacing-md);
+    }
+
+    .white-noise-option {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: var(--spacing-sm);
+      border-radius: var(--border-radius-md);
+      border: 2px solid var(--border-color);
+      background: var(--bg-color);
+      color: var(--text-color);
+      cursor: pointer;
+      transition: all var(--transition-fast);
+    }
+
+    .white-noise-option:hover {
+      border-color: var(--current-color);
+      transform: translateY(-2px);
+    }
+
+    .white-noise-option.active {
+      border-color: var(--current-color);
+      background: var(--current-color);
+      color: white;
+    }
+
+    .noise-icon {
+      font-size: 1.5rem;
+      margin-bottom: var(--spacing-xs);
+    }
+
+    .noise-name {
+      font-size: 0.8125rem;
+      font-weight: 600;
+    }
+
+    .volume-control {
+      display: flex;
+      align-items: center;
+      gap: var(--spacing-md);
+    }
+
+    .volume-control label {
+      font-size: 0.875rem;
+      color: var(--text-secondary);
+      min-width: 40px;
+    }
+
+    .volume-slider {
+      flex: 1;
+      height: 6px;
+      -webkit-appearance: none;
+      background: var(--border-color);
+      border-radius: 3px;
+      outline: none;
+    }
+
+    .volume-slider::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      width: 18px;
+      height: 18px;
+      border-radius: 50%;
+      background: var(--current-color);
+      cursor: pointer;
+    }
+
+    .volume-slider::-moz-range-thumb {
+      width: 18px;
+      height: 18px;
+      border-radius: 50%;
+      background: var(--current-color);
+      cursor: pointer;
+      border: none;
+    }
+
+    #volume-value {
+      font-size: 0.875rem;
+      color: var(--text-color);
+      min-width: 40px;
+      text-align: right;
+    }
+
+    /* 统计样式 */
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: var(--spacing-md);
+      margin-bottom: var(--spacing-lg);
+    }
+
+    .stat-item {
+      text-align: center;
+      padding: var(--spacing-sm);
+      background: var(--bg-color);
+      border-radius: var(--border-radius-md);
+      border: 1px solid var(--border-color);
+    }
+
+    .stat-value {
+      font-size: 1.5rem;
+      font-weight: 700;
+      color: var(--current-color);
+      margin-bottom: var(--spacing-xs);
+    }
+
+    .stat-label {
+      font-size: 0.8125rem;
+      color: var(--text-secondary);
+    }
+
+    .stats-chart-container {
+      width: 100%;
+      height: 100px;
+      background: var(--bg-color);
+      border-radius: var(--border-radius-md);
+      border: 1px solid var(--border-color);
+      padding: var(--spacing-sm);
+    }
+
+    /* 开关按钮样式 */
+    .toggle-switch {
+      position: relative;
+      display: inline-block;
+    }
+
+    .toggle-label {
+      display: flex;
+      align-items: center;
+      cursor: pointer;
+    }
+
+    .toggle-track {
+      width: 44px;
+      height: 24px;
+      background: var(--border-color);
+      border-radius: 12px;
+      position: relative;
+      transition: background-color var(--transition-fast);
+    }
+
+    .toggle-thumb {
+      position: absolute;
+      left: 2px;
+      top: 2px;
+      width: 20px;
+      height: 20px;
+      background: white;
+      border-radius: 50%;
+      transition: transform var(--transition-fast);
+      box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+    }
+
+    #white-noise-toggle:checked + .toggle-label .toggle-track {
+      background: var(--current-color);
+    }
+
+    #white-noise-toggle:checked + .toggle-label .toggle-thumb {
+      transform: translateX(20px);
+    }
+
+    /* 响应式调整 */
+    @media (max-width: 1024px) {
+      .white-noise-grid {
+        grid-template-columns: repeat(2, 1fr);
+      }
+    }
+
+    @media (max-width: 768px) {
+      .white-noise-grid {
+        grid-template-columns: repeat(3, 1fr);
+      }
+
+      .stats-grid {
+        grid-template-columns: repeat(2, 1fr);
+      }
+    }
+
+    @media (max-width: 480px) {
+      .white-noise-grid {
+        grid-template-columns: repeat(2, 1fr);
+      }
+
+      .stats-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    /* ===== Tab样式 ===== */
+    .panel-tabs {
+      display: flex;
+      background: var(--surface-color);
+      border-radius: var(--border-radius-lg) var(--border-radius-lg) 0 0;
+      border-bottom: 1px solid var(--border-color);
+      overflow: hidden;
+    }
+
+    .panel-tab {
+      flex: 1;
+      padding: var(--spacing-md) var(--spacing-lg);
+      background: none;
+      border: none;
+      color: var(--text-secondary);
+      font-weight: 600;
+      cursor: pointer;
+      transition: all var(--transition-fast);
+      position: relative;
+    }
+
+    .panel-tab:hover {
+      background: rgba(0, 0, 0, 0.05);
+      color: var(--text-color);
+    }
+
+    .panel-tab.active {
+      color: var(--current-color);
+      background: var(--bg-color);
+    }
+
+    .panel-tab.active::after {
+      content: '';
+      position: absolute;
+      bottom: -1px;
+      left: 0;
+      right: 0;
+      height: 2px;
+      background: var(--current-color);
+    }
+
+    .tab-content {
+      display: none;
+      padding: var(--spacing-lg);
+      background: var(--bg-color);
+      border-radius: 0 0 var(--border-radius-lg) var(--border-radius-lg);
+    }
+
+    .tab-content.active {
+      display: block;
+    }
+
+    /* 任务Tab样式 */
+    .task-controls {
+      display: flex;
+      flex-direction: column;
+      gap: var(--spacing-md);
+      margin-bottom: var(--spacing-md);
+    }
+
+    .task-input-group {
+      display: flex;
+      gap: var(--spacing-sm);
+    }
+
+    .task-input {
+      flex: 1;
+      padding: var(--spacing-sm) var(--spacing-md);
+      border: 2px solid var(--border-color);
+      border-radius: var(--border-radius-md);
+      font-size: 0.9375rem;
+      background: var(--bg-color);
+      color: var(--text-color);
+    }
+
+    .task-category {
+      padding: var(--spacing-sm) var(--spacing-md);
+      border: 2px solid var(--border-color);
+      border-radius: var(--border-radius-md);
+      background: var(--bg-color);
+      color: var(--text-color);
+      min-width: 80px;
+    }
+
+    .current-tomato {
+      display: flex;
+      align-items: center;
+      gap: var(--spacing-sm);
+      padding: var(--spacing-md);
+      background: rgba(0, 0, 0, 0.05);
+      border-radius: var(--border-radius-md);
+      margin-bottom: var(--spacing-md);
+      border: 1px solid var(--border-color);
+    }
+
+    .tomato-icon {
+      font-size: 1.25rem;
+    }
+
+    .tomato-count {
+      font-weight: 600;
+      color: var(--current-color);
+    }
+
+    .current-task-info {
+      flex: 1;
+      font-size: 0.875rem;
+      color: var(--text-secondary);
+    }
+
+    /* 统计Tab样式 */
+    .stats-overview {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: var(--spacing-md);
+      margin-bottom: var(--spacing-lg);
+    }
+
+    .stat-large {
+      text-align: center;
+      padding: var(--spacing-md);
+      background: var(--surface-color);
+      border-radius: var(--border-radius-lg);
+      border: 1px solid var(--border-color);
+    }
+
+    .stat-large-value {
+      font-size: 2rem;
+      font-weight: 700;
+      color: var(--current-color);
+      margin-bottom: var(--spacing-xs);
+    }
+
+    .stat-large-label {
+      font-size: 0.8125rem;
+      color: var(--text-secondary);
+    }
+
+    .heatmap-container {
+      margin-bottom: var(--spacing-lg);
+    }
+
+    .heatmap-title {
+      font-size: 1rem;
+      font-weight: 600;
+      margin: 0 0 var(--spacing-md) 0;
+      color: var(--text-color);
+    }
+
+    .heatmap {
+      background: var(--surface-color);
+      border-radius: var(--border-radius-md);
+      border: 1px solid var(--border-color);
+      padding: var(--spacing-md);
+      min-height: 120px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--text-secondary);
+    }
+
+    .history-container {
+      margin-top: var(--spacing-lg);
+    }
+
+    .history-title {
+      font-size: 1rem;
+      font-weight: 600;
+      margin: 0 0 var(--spacing-md) 0;
+      color: var(--text-color);
+    }
+
+    .history-list {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+      max-height: 200px;
+      overflow-y: auto;
+    }
+
+    .history-item {
+      padding: var(--spacing-sm) var(--spacing-md);
+      border-radius: var(--border-radius-md);
+      background: var(--bg-color);
+      margin-bottom: var(--spacing-sm);
+      border: 1px solid var(--border-color);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .history-item.empty-history {
+      justify-content: center;
+      color: var(--text-secondary);
+      font-style: italic;
+    }
+
+    .history-time {
+      font-size: 0.875rem;
+      color: var(--text-color);
+      font-family: 'DM Mono', monospace;
+    }
+
+    .history-task {
+      font-size: 0.875rem;
+      color: var(--text-secondary);
+      max-width: 150px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    /* 设置Tab样式 */
+    .duration-control {
+      display: flex;
+      flex-direction: column;
+      gap: var(--spacing-md);
+    }
+
+    .duration-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: var(--spacing-sm) 0;
+      border-bottom: 1px solid var(--border-color);
+    }
+
+    .duration-item:last-child {
+      border-bottom: none;
+    }
+
+    .duration-label {
+      font-size: 1rem;
+      color: var(--text-color);
+    }
+
+    .duration-adjust {
+      display: flex;
+      align-items: center;
+      gap: var(--spacing-md);
+    }
+
+    .duration-btn {
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      border: 2px solid var(--border-color);
+      background: var(--bg-color);
+      color: var(--text-color);
+      font-size: 1.25rem;
+      font-weight: 700;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all var(--transition-fast);
+    }
+
+    .duration-btn:hover {
+      border-color: var(--current-color);
+      color: var(--current-color);
+    }
+
+    .duration-value {
+      font-size: 1.25rem;
+      font-weight: 700;
+      color: var(--text-color);
+      min-width: 30px;
+      text-align: center;
+    }
+
+    .setting-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: var(--spacing-md) 0;
+      border-bottom: 1px solid var(--border-color);
+    }
+
+    .setting-item:last-child {
+      border-bottom: none;
+    }
+
+    .setting-label {
+      font-size: 1rem;
+      color: var(--text-color);
+    }
+
+    .data-controls {
+      display: flex;
+      flex-direction: column;
+      gap: var(--spacing-sm);
+    }
+
+    /* 关于Tab样式 */
+    .shortcuts-list {
+      display: flex;
+      flex-direction: column;
+      gap: var(--spacing-sm);
+    }
+
+    .shortcut-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: var(--spacing-sm) var(--spacing-md);
+      background: var(--surface-color);
+      border-radius: var(--border-radius-md);
+      border: 1px solid var(--border-color);
+    }
+
+    .shortcut-key {
+      font-family: 'DM Mono', monospace;
+      background: var(--bg-color);
+      padding: var(--spacing-xs) var(--spacing-sm);
+      border-radius: var(--border-radius-sm);
+      border: 1px solid var(--border-color);
+      font-weight: 600;
+      color: var(--text-color);
+    }
+
+    .shortcut-desc {
+      color: var(--text-secondary);
+      font-size: 0.9375rem;
+    }
+
+    .project-info {
+      display: flex;
+      flex-direction: column;
+      gap: var(--spacing-sm);
+    }
+
+    .info-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: var(--spacing-sm) 0;
+      border-bottom: 1px solid var(--border-color);
+    }
+
+    .info-item:last-child {
+      border-bottom: none;
+    }
+
+    .info-label {
+      font-weight: 600;
+      color: var(--text-color);
+    }
+
+    .info-value {
+      color: var(--text-secondary);
+    }
+
+    .feedback-info {
+      color: var(--text-secondary);
+      line-height: 1.6;
+    }
+
+    .feedback-info p {
+      margin: 0 0 var(--spacing-sm) 0;
+    }
+
+    /* 响应式调整 */
+    @media (max-width: 768px) {
+      .panel-tabs {
+        flex-wrap: wrap;
+      }
+
+      .panel-tab {
+        flex: 0 0 50%;
+      }
+
+      .stats-overview {
+        grid-template-columns: 1fr;
+      }
+
+      .task-input-group {
+        flex-direction: column;
+      }
+    }
+
+    @media (max-width: 480px) {
+      .panel-tab {
+        flex: 0 0 100%;
+        padding: var(--spacing-sm);
+      }
+
+      .duration-adjust {
+        flex-direction: column;
+        gap: var(--spacing-sm);
+      }
+    }
+  </style>
+</head>
+<body class="pomodoro-page">
+  <!-- 导航栏 -->
+  <header class="navbar">
+    <div class="container">
+      <a href="index.html" class="logo">
+        <span class="logo-icon">⏱️</span>
+        TimeHub
+      </a>
+
+      <nav class="nav-links">
+        <a href="index.html" class="nav-link">仪表盘</a>
+        <a href="pomodoro.html" class="nav-link active">番茄钟</a>
+        <a href="stopwatch.html" class="nav-link">秒表</a>
+        <a href="countdown.html" class="nav-link">多组倒计时</a>
+        <a href="worldclock.html" class="nav-link">世界时钟</a>
+        <a href="deadline.html" class="nav-link">截止倒计时</a>
+        <a href="breathing.html" class="nav-link">呼吸训练</a>
+      </nav>
+
+      <!-- 主题切换按钮 -->
+      <button class="theme-toggle" aria-label="切换主题">
+        <span class="theme-icon">🌙</span>
+      </button>
+
+      <!-- 移动端菜单按钮 -->
+      <button class="btn btn-secondary mobile-menu-btn desktop-hidden" aria-label="打开菜单">
+        <span class="menu-icon">☰</span>
+      </button>
+    </div>
+  </header>
+
+  <!-- 移动端菜单（隐藏） -->
+  <div class="mobile-menu mobile-hidden">
+    <div class="mobile-menu-content">
+      <a href="index.html" class="mobile-nav-link">仪表盘</a>
+      <a href="pomodoro.html" class="mobile-nav-link active">番茄钟</a>
+      <a href="stopwatch.html" class="mobile-nav-link">秒表</a>
+      <a href="countdown.html" class="mobile-nav-link">多组倒计时</a>
+      <a href="worldclock.html" class="mobile-nav-link">世界时钟</a>
+      <a href="deadline.html" class="mobile-nav-link">截止倒计时</a>
+      <a href="breathing.html" class="mobile-nav-link">呼吸训练</a>
+    </div>
+  </div>
+
+  <!-- 主内容 -->
+  <main class="pomodoro-main">
+    <div class="pomodoro-container">
+      <!-- 左侧计时器区域 -->
+      <section class="timer-section">
+        <!-- 模式切换Tab -->
+        <div class="mode-tabs" id="mode-tabs">
+          <button class="mode-tab active" data-mode="pomodoro">专注</button>
+          <button class="mode-tab" data-mode="short-break">短休息</button>
+          <button class="mode-tab" data-mode="long-break">长休息</button>
+        </div>
+
+        <!-- 计时器显示 -->
+        <div class="timer-display">
+          <!-- SVG进度环 -->
+          <svg class="progress-ring" viewBox="0 0 200 200">
+            <circle class="progress-ring-bg" cx="100" cy="100" r="88"></circle>
+            <circle class="progress-ring-fill" cx="100" cy="100" r="88"></circle>
+          </svg>
+
+          <!-- 时间显示 -->
+          <div class="time-display">
+            <div class="time-text" id="time-display">25:00</div>
+            <h2 class="mode-label" id="mode-label">专注时间</h2>
+          </div>
+        </div>
+
+        <!-- 控制按钮 -->
+        <div class="control-buttons">
+          <button class="btn control-btn control-btn-start" id="start-btn">开始</button>
+          <button class="btn btn-secondary control-btn" id="pause-btn" disabled>暂停</button>
+          <button class="btn btn-outline control-btn" id="reset-btn">重置</button>
+        </div>
+
+        <!-- 番茄组进度点 -->
+        <div class="tomato-group" id="tomato-group">
+          <div class="tomato-dot" data-index="0"></div>
+          <div class="tomato-dot" data-index="1"></div>
+          <div class="tomato-dot" data-index="2"></div>
+          <div class="tomato-dot" data-index="3"></div>
+        </div>
+
+        <!-- 白噪音控制条 -->
+        <div class="ambient-bar" id="ambient-bar">
+          <div class="ambient-options">
+            <button class="ambient-option active" data-sound="off" title="关闭">🔇</button>
+            <button class="ambient-option" data-sound="rain" title="雨声">🌧</button>
+            <button class="ambient-option" data-sound="cafe" title="咖啡">☕</button>
+            <button class="ambient-option" data-sound="forest" title="森林">🌿</button>
+            <button class="ambient-option" data-sound="fire" title="篝火">🔥</button>
+          </div>
+          <div class="ambient-volume">
+            <input type="range" id="ambient-volume" min="0" max="100" value="50" class="volume-slider">
+          </div>
+          <button class="zen-btn" id="zen-btn">沉浸模式</button>
+        </div>
+      </section>
+
+      <!-- 右侧面板区域 -->
+      <section class="panel-section">
+        <!-- Tab导航 -->
+        <div class="panel-tabs">
+          <button class="panel-tab active" data-tab="tasks">任务</button>
+          <button class="panel-tab" data-tab="stats">统计</button>
+          <button class="panel-tab" data-tab="settings">设置</button>
+          <button class="panel-tab" data-tab="about">关于</button>
+        </div>
+
+        <!-- 任务Tab -->
+        <div class="tab-content active" id="tasks-tab">
+          <div class="panel-card">
+            <div class="panel-card-header">
+              <h3 class="panel-card-title">任务列表</h3>
+              <div class="task-controls">
+                <div class="task-input-group">
+                  <input type="text" id="new-task-input" placeholder="输入任务内容..." class="task-input">
+                  <select id="task-category" class="task-category">
+                    <option value="general">常规</option>
+                    <option value="work">工作</option>
+                    <option value="study">学习</option>
+                    <option value="personal">个人</option>
+                  </select>
+                  <button class="btn btn-sm" id="add-task-btn">添加</button>
+                </div>
+                <button class="btn btn-sm btn-outline" id="clear-completed-btn">清除已完成</button>
+              </div>
+            </div>
+
+            <div class="current-tomato">
+              <span class="tomato-icon">🍅</span>
+              <span class="tomato-count">×<span id="current-tomato-count">0</span></span>
+              <span class="current-task-info" id="current-task-info">未关联任务</span>
+            </div>
+
+            <ul class="task-list" id="task-list">
+              <!-- 任务项将通过JS动态添加 -->
+              <li class="task-item empty-task">
+                <span>暂无任务，点击"添加"创建</span>
+              </li>
+            </ul>
+          </div>
+        </div>
+
+        <!-- 统计Tab -->
+        <div class="tab-content" id="stats-tab">
+          <div class="panel-card">
+            <div class="panel-card-header">
+              <h3 class="panel-card-title">番茄统计</h3>
+            </div>
+
+            <div class="stats-overview">
+              <div class="stat-large">
+                <div class="stat-large-value" id="today-tomatoes">0</div>
+                <div class="stat-large-label">今日番茄</div>
+              </div>
+              <div class="stat-large">
+                <div class="stat-large-value" id="total-tomatoes">0</div>
+                <div class="stat-large-label">累计番茄</div>
+              </div>
+              <div class="stat-large">
+                <div class="stat-large-value" id="today-focus-minutes">0</div>
+                <div class="stat-large-label">专注分钟</div>
+              </div>
+              <div class="stat-large">
+                <div class="stat-large-value" id="streak-days">0</div>
+                <div class="stat-large-label">连续天数</div>
+              </div>
+            </div>
+
+            <div class="heatmap-container">
+              <h4 class="heatmap-title">最近6个月</h4>
+              <div class="heatmap" id="heatmap">
+                <!-- 热力图将通过JS生成 -->
+              </div>
+            </div>
+
+            <div class="history-container">
+              <h4 class="history-title">今日历史</h4>
+              <ul class="history-list" id="history-list">
+                <!-- 历史记录将通过JS动态添加 -->
+                <li class="history-item empty-history">
+                  <span>今日暂无番茄记录</span>
+                </li>
+              </ul>
+            </div>
+          </div>
+        </div>
+
+        <!-- 设置Tab -->
+        <div class="tab-content" id="settings-tab">
+          <!-- 时长设置 -->
+          <div class="panel-card">
+            <div class="panel-card-header">
+              <h3 class="panel-card-title">时长设置</h3>
+            </div>
+
+            <div class="duration-control">
+              <div class="duration-item">
+                <label class="duration-label">专注时间</label>
+                <div class="duration-adjust">
+                  <button class="duration-btn minus" data-duration="pomodoro">−</button>
+                  <span class="duration-value" id="pomodoro-duration">25</span> 分钟
+                  <button class="duration-btn plus" data-duration="pomodoro">+</button>
+                </div>
+              </div>
+              <div class="duration-item">
+                <label class="duration-label">短休息</label>
+                <div class="duration-adjust">
+                  <button class="duration-btn minus" data-duration="short-break">−</button>
+                  <span class="duration-value" id="short-break-duration">5</span> 分钟
+                  <button class="duration-btn plus" data-duration="short-break">+</button>
+                </div>
+              </div>
+              <div class="duration-item">
+                <label class="duration-label">长休息</label>
+                <div class="duration-adjust">
+                  <button class="duration-btn minus" data-duration="long-break">−</button>
+                  <span class="duration-value" id="long-break-duration">15</span> 分钟
+                  <button class="duration-btn plus" data-duration="long-break">+</button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- 白噪音设置 -->
+          <div class="panel-card">
+            <div class="panel-card-header">
+              <h3 class="panel-card-title">白噪音</h3>
+            </div>
+
+            <div class="white-noise-grid" id="white-noise-grid">
+              <button class="white-noise-option active" data-sound="off">
+                <span class="noise-icon">🔇</span>
+                <span class="noise-name">关闭</span>
+              </button>
+              <button class="white-noise-option" data-sound="rain">
+                <span class="noise-icon">🌧</span>
+                <span class="noise-name">雨声</span>
+              </button>
+              <button class="white-noise-option" data-sound="cafe">
+                <span class="noise-icon">☕</span>
+                <span class="noise-name">咖啡</span>
+              </button>
+              <button class="white-noise-option" data-sound="forest">
+                <span class="noise-icon">🌿</span>
+                <span class="noise-name">森林</span>
+              </button>
+              <button class="white-noise-option" data-sound="fire">
+                <span class="noise-icon">🔥</span>
+                <span class="noise-name">篝火</span>
+              </button>
+            </div>
+
+            <div class="volume-control">
+              <label for="volume-slider">音量</label>
+              <input type="range" id="volume-slider" min="0" max="100" value="50" class="volume-slider">
+              <span id="volume-value">50%</span>
+            </div>
+          </div>
+
+          <!-- 通知和声音设置 -->
+          <div class="panel-card">
+            <div class="panel-card-header">
+              <h3 class="panel-card-title">通知与声音</h3>
+            </div>
+
+            <div class="setting-item">
+              <label class="setting-label">桌面通知</label>
+              <div class="toggle-switch">
+                <input type="checkbox" id="notification-toggle" hidden>
+                <label for="notification-toggle" class="toggle-label">
+                  <span class="toggle-track"></span>
+                  <span class="toggle-thumb"></span>
+                </label>
+              </div>
+            </div>
+
+            <div class="setting-item">
+              <label class="setting-label">提示音</label>
+              <div class="toggle-switch">
+                <input type="checkbox" id="sound-toggle" hidden checked>
+                <label for="sound-toggle" class="toggle-label">
+                  <span class="toggle-track"></span>
+                  <span class="toggle-thumb"></span>
+                </label>
+              </div>
+            </div>
+          </div>
+
+          <!-- 数据管理 -->
+          <div class="panel-card">
+            <div class="panel-card-header">
+              <h3 class="panel-card-title">数据管理</h3>
+            </div>
+
+            <div class="data-controls">
+              <button class="btn btn-outline" id="export-data-btn">导出数据</button>
+              <button class="btn btn-outline" id="import-data-btn">导入数据</button>
+              <button class="btn btn-outline" id="reset-data-btn">重置数据</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- 关于Tab -->
+        <div class="tab-content" id="about-tab">
+          <div class="panel-card">
+            <div class="panel-card-header">
+              <h3 class="panel-card-title">键盘快捷键</h3>
+            </div>
+
+            <div class="shortcuts-list">
+              <div class="shortcut-item">
+                <span class="shortcut-key">空格键</span>
+                <span class="shortcut-desc">开始/暂停计时器</span>
+              </div>
+              <div class="shortcut-item">
+                <span class="shortcut-key">R 键</span>
+                <span class="shortcut-desc">重置计时器</span>
+              </div>
+              <div class="shortcut-item">
+                <span class="shortcut-key">1 键</span>
+                <span class="shortcut-desc">切换到专注模式</span>
+              </div>
+              <div class="shortcut-item">
+                <span class="shortcut-key">2 键</span>
+                <span class="shortcut-desc">切换到短休息</span>
+              </div>
+              <div class="shortcut-item">
+                <span class="shortcut-key">3 键</span>
+                <span class="shortcut-desc">切换到长休息</span>
+              </div>
+              <div class="shortcut-item">
+                <span class="shortcut-key">T 键</span>
+                <span class="shortcut-desc">添加新任务</span>
+              </div>
+              <div class="shortcut-item">
+                <span class="shortcut-key">ESC 键</span>
+                <span class="shortcut-desc">取消输入/关闭弹窗</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="panel-card">
+            <div class="panel-card-header">
+              <h3 class="panel-card-title">项目信息</h3>
+            </div>
+
+            <div class="project-info">
+              <div class="info-item">
+                <span class="info-label">名称</span>
+                <span class="info-value">TimeHub</span>
+              </div>
+              <div class="info-item">
+                <span class="info-label">版本</span>
+                <span class="info-value">1.0.0</span>
+              </div>
+              <div class="info-item">
+                <span class="info-label">作者</span>
+                <span class="info-value">TimeHub Team</span>
+              </div>
+              <div class="info-item">
+                <span class="info-label">技术栈</span>
+                <span class="info-value">Vanilla JS + CSS + HTML</span>
+              </div>
+              <div class="info-item">
+                <span class="info-label">许可证</span>
+                <span class="info-value">MIT</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="panel-card">
+            <div class="panel-card-header">
+              <h3 class="panel-card-title">数据管理</h3>
+            </div>
+            <div class="feedback-info">
+              <p><strong>数据保存期限：</strong></p>
+              <ul>
+                <li>任务数据：永久保存，除非手动清除</li>
+                <li>番茄统计：按日期永久保存，方便追踪长期趋势</li>
+                <li>历史记录：保留最近100条完成记录</li>
+                <li>所有数据保存在浏览器本地存储中</li>
+              </ul>
+              <p><strong>数据安全建议：</strong></p>
+              <ul>
+                <li>定期使用"导出数据"功能备份到本地文件</li>
+                <li>更换设备或浏览器时使用"导入数据"恢复</li>
+                <li>使用"重置数据"可清除所有本地数据</li>
+                <li>清除浏览器缓存或隐私数据会导致数据丢失</li>
+              </ul>
+              <p><strong>技术说明：</strong>数据使用localStorage存储，受浏览器存储限制（通常5-10MB）。</p>
+            </div>
+          </div>
+
+          <div class="panel-card">
+            <div class="panel-card-header">
+              <h3 class="panel-card-title">反馈与支持</h3>
+            </div>
+
+            <div class="feedback-info">
+              <p>如果您有任何建议或发现问题，欢迎通过以下方式联系我们：</p>
+              <p><strong>邮箱：</strong>support@timehub.example.com</p>
+              <p>感谢使用 TimeHub！</p>
+            </div>
+          </div>
+        </div>
+      </section>
+    </div>
+  </main>
+
+  <!-- 沉浸模式覆盖层 -->
+  <div class="zen-overlay" id="zen-overlay">
+    <button class="zen-close" id="zen-close">退出沉浸模式 (ESC)</button>
+
+    <div class="zen-clock" id="zen-clock">
+      <span class="zen-digit-box" id="zen-m1">0</span>
+      <span class="zen-digit-box" id="zen-m2">0</span>
+      <span class="zen-sep">:</span>
+      <span class="zen-digit-box" id="zen-s1">0</span>
+      <span class="zen-digit-box" id="zen-s2">0</span>
+    </div>
+
+    <div class="zen-progress">
+      <div class="zen-progress-fill" id="zen-progress-fill" style="width: 0%"></div>
+    </div>
+
+    <div class="zen-info">
+      <span id="zen-mode-label">专注时间</span>
+      <span id="zen-ambient-label"></span>
+    </div>
+  </div>
+
+  <!-- 页脚 -->
+  <footer class="footer">
+    <div class="container">
+      <div class="footer-content">
+        <div class="footer-section">
+          <h3 class="footer-title">TimeHub</h3>
+          <p class="footer-description">
+            一个简单而强大的时间管理工具集合，帮助您更高效地利用每一分钟。
+          </p>
+        </div>
+
+        <div class="footer-section">
+          <h3 class="footer-title">快速链接</h3>
+          <ul class="footer-links">
+            <li><a href="index.html">仪表盘</a></li>
+            <li><a href="pomodoro.html">番茄钟</a></li>
+            <li><a href="stopwatch.html">秒表</a></li>
+            <li><a href="countdown.html">多组倒计时</a></li>
+            <li><a href="worldclock.html">世界时钟</a></li>
+            <li><a href="deadline.html">截止倒计时</a></li>
+            <li><a href="breathing.html">呼吸训练</a></li>
+          </ul>
+        </div>
+
+        <div class="footer-section">
+          <h3 class="footer-title">反馈</h3>
+          <p class="footer-description">
+            如果您有任何建议或发现问题，欢迎联系我们。
+          </p>
+          <a href="mailto:support@timehub.example.com" class="btn btn-outline">发送反馈</a>
+        </div>
+      </div>
+
+      <div class="footer-bottom">
+        <p>&copy; <span id="current-year">2024</span> TimeHub. 保留所有权利。</p>
+        <p class="footer-version">版本 <span id="app-version">1.0.0</span></p>
+      </div>
+    </div>
+  </footer>
+
+  <!-- JavaScript 文件 -->
+  <script src="js/common.js"></script>
+  <script src="js/toast.js"></script>
+  <script src="js/utils.js"></script>
+  <script src="js/pomodoro.js"></script>
+
+  <!-- 内联脚本 -->
+  <script>
+    // 设置当前年份和应用版本
+    document.getElementById('current-year').textContent = new Date().getFullYear();
+    document.getElementById('app-version').textContent = TimeHub?.CONSTANTS?.VERSION || '1.0.0';
+
+    // 移动端菜单切换
+    document.querySelector('.mobile-menu-btn')?.addEventListener('click', function() {
+      const menu = document.querySelector('.mobile-menu');
+      menu.classList.toggle('mobile-hidden');
+    });
+
+    // 点击菜单项后关闭移动菜单
+    document.querySelectorAll('.mobile-nav-link').forEach(link => {
+      link.addEventListener('click', () => {
+        document.querySelector('.mobile-menu').classList.add('mobile-hidden');
+      });
+    });
+
+    // 点击遮罩层关闭菜单
+    document.querySelector('.mobile-menu')?.addEventListener('click', function(e) {
+      if (e.target === this) {
+        this.classList.add('mobile-hidden');
+      }
+    });
+  </script>
+
+  <!-- 移动端底部导航 -->
+  <div class="mobile-bottom-nav">
+    <a href="index.html" class="bottom-nav-item">
+      <span class="bottom-nav-icon">🏠</span>
+      <span class="bottom-nav-label">首页</span>
+    </a>
+    <a href="pomodoro.html" class="bottom-nav-item active">
+      <span class="bottom-nav-icon">🍅</span>
+      <span class="bottom-nav-label">番茄</span>
+    </a>
+    <a href="stopwatch.html" class="bottom-nav-item">
+      <span class="bottom-nav-icon">⏱️</span>
+      <span class="bottom-nav-label">秒表</span>
+    </a>
+    <a href="worldclock.html" class="bottom-nav-item">
+      <span class="bottom-nav-icon">🌐</span>
+      <span class="bottom-nav-label">世界</span>
+    </a>
+    <a href="breathing.html" class="bottom-nav-item">
+      <span class="bottom-nav-icon">🧘</span>
+      <span class="bottom-nav-label">呼吸</span>
+    </a>
+  </div>
+
+  <!-- Service Worker 注册 -->
+  <script>
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', function() {
+        navigator.serviceWorker.register('sw.js').then(function(registration) {
+          console.log('Service Worker 注册成功：', registration.scope);
+        }).catch(function(error) {
+          console.log('Service Worker 注册失败：', error);
+        });
+      });
+    }
+  </script>
+</body>
+</html>

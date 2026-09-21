@@ -1,0 +1,667 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>多组倒计时 - TimeHub</title>
+  <meta name="description" content="TimeHub多组倒计时工具，同时管理多个倒计时任务。">
+  <link rel="stylesheet" href="css/base.css">
+  <link rel="stylesheet" href="css/layout.css">
+  <link rel="stylesheet" href="css/components.css">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&display=swap">
+  <link rel="icon" href="assets/icons/multi-timer.svg" type="image/svg+xml">
+
+  <!-- iOS 支持 -->
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <link rel="apple-touch-icon" href="assets/icons/multi-timer.svg">
+
+  <!-- PWA 相关 -->
+  <meta name="theme-color" content="#C0392B">
+  <link rel="manifest" href="manifest.json" crossorigin="use-credentials">
+  <style>
+    .countdown-page { }
+
+    .countdown-main {
+      flex: 1;
+      padding: var(--spacing-xl) 0;
+    }
+
+    .countdown-container {
+      max-width: var(--max-width);
+      margin: 0 auto;
+      padding: 0 var(--spacing-md);
+    }
+
+    .presets-bar {
+      display: flex;
+      flex-wrap: wrap;
+      gap: var(--spacing-sm);
+      margin-bottom: var(--spacing-lg);
+      justify-content: center;
+    }
+
+    .preset-btn {
+      padding: var(--spacing-sm) var(--spacing-md);
+      border-radius: var(--border-radius-md);
+      border: 1px solid var(--border-color);
+      background: var(--surface-color);
+      color: var(--text-color);
+      font-weight: 600;
+      cursor: pointer;
+      transition: all var(--transition-fast);
+    }
+
+    .preset-btn:hover {
+      border-color: var(--primary-color);
+      color: var(--primary-color);
+    }
+
+    .cards-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+      gap: var(--spacing-lg);
+    }
+
+    .timer-card {
+      background: var(--surface-color);
+      border: 2px solid var(--border-color);
+      border-radius: var(--border-radius-lg);
+      padding: var(--spacing-lg);
+      position: relative;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: var(--spacing-md);
+      transition: border-color var(--transition-fast);
+    }
+
+    .timer-card.alarm {
+      animation: alarmBlink 0.8s ease-in-out 3;
+    }
+
+    @keyframes alarmBlink {
+      0%, 100% { border-color: var(--border-color); }
+      50% { border-color: #e63946; box-shadow: 0 0 12px rgba(230, 57, 70, 0.35); }
+    }
+
+    .card-header {
+      width: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: var(--spacing-sm);
+    }
+
+    .card-title {
+      font-size: 1rem;
+      font-weight: 600;
+      color: var(--text-color);
+      border: 1px solid transparent;
+      border-radius: var(--border-radius-sm);
+      padding: 2px 6px;
+      flex: 1;
+      background: transparent;
+    }
+
+    .card-title:hover,
+    .card-title:focus {
+      border-color: var(--border-color);
+      background: var(--bg-color);
+      outline: none;
+    }
+
+    .color-dots {
+      display: flex;
+      gap: 4px;
+    }
+
+    .color-dot {
+      width: 14px;
+      height: 14px;
+      border-radius: 50%;
+      cursor: pointer;
+      border: 2px solid transparent;
+      transition: transform var(--transition-fast);
+    }
+
+    .color-dot:hover {
+      transform: scale(1.15);
+    }
+
+    .color-dot.active {
+      border-color: var(--text-color);
+    }
+
+    .card-delete {
+      color: var(--text-secondary);
+      background: none;
+      border: none;
+      cursor: pointer;
+      font-size: 1.25rem;
+      line-height: 1;
+      padding: 0 2px;
+    }
+
+    .card-delete:hover {
+      color: #e63946;
+    }
+
+    .ring-display {
+      position: relative;
+      width: 180px;
+      height: 180px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .progress-ring {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      transform: rotate(-90deg);
+    }
+
+    .progress-ring-bg {
+      fill: none;
+      stroke: var(--border-color);
+      stroke-width: 8;
+    }
+
+    .progress-ring-fill {
+      fill: none;
+      stroke-width: 8;
+      stroke-linecap: round;
+      stroke-dasharray: 502.65;
+      stroke-dashoffset: 502.65;
+      transition: stroke-dashoffset 0.3s linear;
+    }
+
+    .time-text {
+      font-family: 'DM Mono', monospace;
+      font-size: 2rem;
+      font-weight: 500;
+      color: var(--text-color);
+      text-align: center;
+      z-index: 1;
+    }
+
+    .inputs-row {
+      display: flex;
+      gap: var(--spacing-sm);
+      align-items: center;
+    }
+
+    .time-input {
+      width: 56px;
+      padding: var(--spacing-sm);
+      border: 1px solid var(--border-color);
+      border-radius: var(--border-radius-md);
+      background: var(--bg-color);
+      color: var(--text-color);
+      text-align: center;
+      font-family: 'DM Mono', monospace;
+    }
+
+    .time-input:focus {
+      outline: none;
+      border-color: var(--primary-color);
+    }
+
+    .input-sep {
+      color: var(--text-secondary);
+      font-weight: 600;
+    }
+
+    .card-actions {
+      display: flex;
+      gap: var(--spacing-sm);
+      width: 100%;
+      justify-content: center;
+    }
+
+    .card-actions .btn {
+      flex: 1;
+      padding: var(--spacing-sm) var(--spacing-md);
+      font-size: 0.9375rem;
+    }
+
+    .add-btn {
+      position: fixed;
+      right: 24px;
+      bottom: 24px;
+      width: 56px;
+      height: 56px;
+      border-radius: 50%;
+      background: var(--primary-color);
+      color: #fff;
+      font-size: 1.75rem;
+      border: none;
+      cursor: pointer;
+      box-shadow: var(--shadow-lg);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: transform var(--transition-fast), background-color var(--transition-fast);
+      z-index: 50;
+    }
+
+    .add-btn:hover {
+      transform: scale(1.05);
+      background: var(--primary-dark);
+    }
+
+    .add-btn:disabled {
+      background: var(--border-color);
+      cursor: not-allowed;
+      transform: none;
+    }
+
+    @media (max-width: 480px) {
+      .ring-display {
+        width: 160px;
+        height: 160px;
+      }
+      .time-text {
+        font-size: 1.75rem;
+      }
+    }
+  </style>
+</head>
+<body class="countdown-page">
+  <header class="navbar">
+    <div class="container">
+      <a href="index.html" class="logo">
+        <span class="logo-icon">⏱️</span>
+        TimeHub
+      </a>
+      <nav class="nav-links">
+        <a href="index.html" class="nav-link">仪表盘</a>
+        <a href="pomodoro.html" class="nav-link">番茄钟</a>
+        <a href="stopwatch.html" class="nav-link">秒表</a>
+        <a href="countdown.html" class="nav-link active">多组倒计时</a>
+        <a href="worldclock.html" class="nav-link">世界时钟</a>
+        <a href="deadline.html" class="nav-link">截止倒计时</a>
+        <a href="breathing.html" class="nav-link">呼吸训练</a>
+      </nav>
+      <button class="theme-toggle" aria-label="切换主题">
+        <span class="theme-icon">🌙</span>
+      </button>
+      <button class="mobile-menu-btn" aria-label="打开菜单" id="menu-btn">
+        <span class="menu-icon">☰</span>
+      </button>
+    </div>
+  </header>
+
+  <div class="mobile-menu" id="mobile-menu">
+    <div class="mobile-menu-content">
+      <a href="index.html" class="mobile-nav-link">仪表盘</a>
+      <a href="pomodoro.html" class="mobile-nav-link">番茄钟</a>
+      <a href="stopwatch.html" class="mobile-nav-link">秒表</a>
+      <a href="countdown.html" class="mobile-nav-link active">多组倒计时</a>
+      <a href="worldclock.html" class="mobile-nav-link">世界时钟</a>
+      <a href="deadline.html" class="mobile-nav-link">截止倒计时</a>
+      <a href="breathing.html" class="mobile-nav-link">呼吸训练</a>
+    </div>
+  </div>
+
+  <main class="countdown-main">
+    <div class="countdown-container">
+      <div class="presets-bar">
+        <button class="preset-btn" data-preset="meditation">3分钟冥想</button>
+        <button class="preset-btn" data-preset="break">5分钟休息</button>
+        <button class="preset-btn" data-preset="short">10分钟</button>
+        <button class="preset-btn" data-preset="pomodoro">25分钟番茄</button>
+      </div>
+
+      <div class="cards-grid" id="cards-grid"></div>
+    </div>
+  </main>
+
+  <footer class="footer">
+    <div class="container">
+      <div class="footer-content"><p>TimeHub - 简单而强大的时间管理工具</p></div>
+      <div class="footer-bottom">
+        <p>&copy; <span id="year"></span> TimeHub</p>
+        <p class="footer-version">版本 1.0.0</p>
+      </div>
+    </div>
+  </footer>
+
+  <button class="add-btn" id="add-btn" aria-label="添加倒计时">+</button>
+
+  <script src="js/toast.js"></script>
+  <script src="js/common.js"></script>
+  <script>
+    (function() {
+      'use strict';
+
+      const grid = document.getElementById('cards-grid');
+      const addBtn = document.getElementById('add-btn');
+      const presets = document.querySelectorAll('.preset-btn');
+
+      const COLORS = [
+        { name: 'blue',   hex: '#4361ee' },
+        { name: 'green',  hex: '#2a9d8f' },
+        { name: 'orange', hex: '#f8961e' },
+        { name: 'pink',   hex: '#f72585' },
+        { name: 'purple', hex: '#7209b7' }
+      ];
+
+      const PRESETS = {
+        meditation: { h: 0, m: 3, s: 0, title: '冥想', color: COLORS[1].hex },
+        break:      { h: 0, m: 5, s: 0, title: '休息', color: COLORS[0].hex },
+        short:      { h: 0, m:10, s: 0, title: '倒计时', color: COLORS[2].hex },
+        pomodoro:   { h: 0, m:25, s: 0, title: '番茄钟', color: COLORS[3].hex }
+      };
+
+      let timers = [];
+      let nextId = 1;
+
+      const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+
+      function playBeep() {
+        const t = audioCtx.currentTime;
+        const o = audioCtx.createOscillator();
+        const g = audioCtx.createGain();
+        o.type = 'sine';
+        o.frequency.setValueAtTime(880, t);
+        o.frequency.exponentialRampToValueAtTime(440, t + 0.3);
+        g.gain.setValueAtTime(0.3, t);
+        g.gain.exponentialRampToValueAtTime(0.001, t + 0.3);
+        o.connect(g);
+        g.connect(audioCtx.destination);
+        o.start(t);
+        o.stop(t + 0.3);
+      }
+
+      function showNotification(title) {
+        if (window.Notification && Notification.permission === 'granted') {
+          new Notification('TimeHub 倒计时', { body: `「${title}」时间到！` });
+        } else if (window.Notification && Notification.permission !== 'denied') {
+          Notification.requestPermission().then(p => {
+            if (p === 'granted') new Notification('TimeHub 倒计时', { body: `「${title}」时间到！` });
+          });
+        }
+      }
+
+      function formatTime(totalSeconds) {
+        const h = Math.floor(totalSeconds / 3600);
+        const m = Math.floor((totalSeconds % 3600) / 60);
+        const s = totalSeconds % 60;
+        return `${h.toString().padStart(2, '0')}:${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
+      }
+
+      function createCard(data) {
+        const id = data?.id || nextId++;
+        const color = data?.color || COLORS[0].hex;
+        const title = data?.title || '倒计时 ' + id;
+        const h = data?.h ?? 0;
+        const m = data?.m ?? 0;
+        const s = data?.s ?? 0;
+        const total = h * 3600 + m * 60 + s;
+
+        const card = document.createElement('div');
+        card.className = 'timer-card';
+        card.dataset.id = id;
+        card.style.borderColor = 'var(--border-color)';
+
+        const dotsHtml = COLORS.map(c =>
+          `<span class="color-dot ${c.hex === color ? 'active' : ''}" data-color="${c.hex}" style="background:${c.hex}"></span>`
+        ).join('');
+
+        card.innerHTML = `
+          <div class="card-header">
+            <input type="text" class="card-title" value="${title}" aria-label="倒计时名称">
+            <div class="color-dots">${dotsHtml}</div>
+            <button class="card-delete" aria-label="删除">×</button>
+          </div>
+          <div class="ring-display">
+            <svg class="progress-ring" viewBox="0 0 180 180">
+              <circle class="progress-ring-bg" cx="90" cy="90" r="80"></circle>
+              <circle class="progress-ring-fill" cx="90" cy="90" r="80" style="stroke:${color}"></circle>
+            </svg>
+            <div class="time-text">${formatTime(total)}</div>
+          </div>
+          <div class="inputs-row" data-id="${id}">
+            <input type="number" class="time-input" min="0" max="99" value="${h}" aria-label="时">
+            <span class="input-sep">:</span>
+            <input type="number" class="time-input" min="0" max="59" value="${m}" aria-label="分">
+            <span class="input-sep">:</span>
+            <input type="number" class="time-input" min="0" max="59" value="${s}" aria-label="秒">
+          </div>
+          <div class="card-actions">
+            <button class="btn btn-primary btn-toggle">开始</button>
+            <button class="btn btn-outline btn-reset">重置</button>
+          </div>
+        `;
+
+        grid.appendChild(card);
+
+        const timer = {
+          id,
+          card,
+          total,
+          remaining: total,
+          state: 'idle',
+          interval: null,
+          color
+        };
+        timers.push(timer);
+        bindCardEvents(card, timer);
+        updateRing(timer);
+        checkAddBtn();
+        return timer;
+      }
+
+      function bindCardEvents(card, timer) {
+        const titleInput = card.querySelector('.card-title');
+        const dots = card.querySelectorAll('.color-dot');
+        const delBtn = card.querySelector('.card-delete');
+        const toggleBtn = card.querySelector('.btn-toggle');
+        const resetBtn = card.querySelector('.btn-reset');
+        const inputs = card.querySelectorAll('.time-input');
+        const fill = card.querySelector('.progress-ring-fill');
+
+        dots.forEach(dot => {
+          dot.addEventListener('click', () => {
+            dots.forEach(d => d.classList.remove('active'));
+            dot.classList.add('active');
+            timer.color = dot.dataset.color;
+            fill.style.stroke = timer.color;
+          });
+        });
+
+        delBtn.addEventListener('click', () => {
+          stopTimer(timer);
+          card.remove();
+          timers = timers.filter(t => t.id !== timer.id);
+          checkAddBtn();
+        });
+
+        inputs.forEach(inp => {
+          inp.addEventListener('change', () => {
+            if (timer.state !== 'idle') return;
+            let h = parseInt(inputs[0].value) || 0;
+            let m = parseInt(inputs[1].value) || 0;
+            let s = parseInt(inputs[2].value) || 0;
+            if (m > 59) m = 59; if (s > 59) s = 59;
+            inputs[0].value = h; inputs[1].value = m; inputs[2].value = s;
+            timer.total = h * 3600 + m * 60 + s;
+            timer.remaining = timer.total;
+            updateDisplay(timer);
+            updateRing(timer);
+          });
+        });
+
+        toggleBtn.addEventListener('click', () => {
+          if (timer.state === 'running') pauseTimer(timer);
+          else startTimer(timer);
+        });
+
+        resetBtn.addEventListener('click', () => {
+          stopTimer(timer);
+          timer.state = 'idle';
+          const inputs = card.querySelectorAll('.time-input');
+          let h = parseInt(inputs[0].value) || 0;
+          let m = parseInt(inputs[1].value) || 0;
+          let s = parseInt(inputs[2].value) || 0;
+          timer.total = h * 3600 + m * 60 + s;
+          timer.remaining = timer.total;
+          updateDisplay(timer);
+          updateRing(timer);
+          toggleBtn.textContent = '开始';
+          toggleBtn.classList.remove('btn-secondary');
+          toggleBtn.classList.add('btn-primary');
+          card.classList.remove('alarm');
+          card.querySelector('.inputs-row').style.display = 'flex';
+        });
+      }
+
+      function startTimer(timer) {
+        if (timer.state === 'running') return;
+        if (timer.remaining <= 0) return;
+        timer.state = 'running';
+        const btn = timer.card.querySelector('.btn-toggle');
+        btn.textContent = '暂停';
+        btn.classList.remove('btn-primary');
+        btn.classList.add('btn-secondary');
+        timer.card.querySelector('.inputs-row').style.display = 'none';
+        timer.card.classList.remove('alarm');
+        if (audioCtx.state === 'suspended') audioCtx.resume();
+        timer.interval = setInterval(() => tickTimer(timer), 1000);
+      }
+
+      function pauseTimer(timer) {
+        if (timer.state !== 'running') return;
+        timer.state = 'paused';
+        stopInterval(timer);
+        const btn = timer.card.querySelector('.btn-toggle');
+        btn.textContent = '继续';
+        btn.classList.remove('btn-secondary');
+        btn.classList.add('btn-primary');
+      }
+
+      function stopTimer(timer) {
+        stopInterval(timer);
+        timer.state = 'idle';
+      }
+
+      function stopInterval(timer) {
+        if (timer.interval) {
+          clearInterval(timer.interval);
+          timer.interval = null;
+        }
+      }
+
+      function tickTimer(timer) {
+        if (timer.state !== 'running') return;
+        timer.remaining--;
+        updateDisplay(timer);
+        updateRing(timer);
+        if (timer.remaining <= 0) {
+          finishTimer(timer);
+        }
+      }
+
+      function finishTimer(timer) {
+        stopInterval(timer);
+        timer.state = 'finished';
+        const btn = timer.card.querySelector('.btn-toggle');
+        btn.textContent = '开始';
+        btn.classList.remove('btn-secondary');
+        btn.classList.add('btn-primary');
+        timer.card.classList.add('alarm');
+        timer.card.querySelector('.inputs-row').style.display = 'flex';
+        playBeep();
+        showNotification(timer.card.querySelector('.card-title').value);
+      }
+
+      function updateDisplay(timer) {
+        timer.card.querySelector('.time-text').textContent = formatTime(Math.max(0, timer.remaining));
+      }
+
+      function updateRing(timer) {
+        const circumference = 2 * Math.PI * 80;
+        const progress = timer.total > 0 ? (timer.total - Math.max(0, timer.remaining)) / timer.total : 0;
+        const offset = circumference * (1 - progress);
+        timer.card.querySelector('.progress-ring-fill').style.strokeDashoffset = offset;
+      }
+
+      function checkAddBtn() {
+        addBtn.disabled = timers.length >= 8;
+      }
+
+      addBtn.addEventListener('click', () => {
+        if (timers.length < 8) createCard();
+      });
+
+      presets.forEach(btn => {
+        btn.addEventListener('click', () => {
+          if (timers.length >= 8) return;
+          const p = PRESETS[btn.dataset.preset];
+          createCard({ h: p.h, m: p.m, s: p.s, title: p.title, color: p.color });
+        });
+      });
+
+      // mobile menu
+      document.getElementById('menu-btn').addEventListener('click', () => {
+        document.getElementById('mobile-menu').classList.toggle('show');
+      });
+      document.querySelectorAll('.mobile-nav-link').forEach(link => {
+        link.addEventListener('click', () => {
+          document.getElementById('mobile-menu').classList.remove('show');
+        });
+      });
+      document.getElementById('mobile-menu').addEventListener('click', function(e) {
+        if (e.target === this) this.classList.remove('show');
+      });
+
+      document.getElementById('year').textContent = new Date().getFullYear();
+
+      // init first card
+      createCard({ h: 0, m: 5, s: 0, title: '倒计时 1', color: COLORS[0].hex });
+    })();
+  </script>
+
+  <!-- 移动端底部导航 -->
+  <div class="mobile-bottom-nav">
+    <a href="index.html" class="bottom-nav-item">
+      <span class="bottom-nav-icon">🏠</span>
+      <span class="bottom-nav-label">首页</span>
+    </a>
+    <a href="pomodoro.html" class="bottom-nav-item">
+      <span class="bottom-nav-icon">🍅</span>
+      <span class="bottom-nav-label">番茄</span>
+    </a>
+    <a href="stopwatch.html" class="bottom-nav-item">
+      <span class="bottom-nav-icon">⏱️</span>
+      <span class="bottom-nav-label">秒表</span>
+    </a>
+    <a href="worldclock.html" class="bottom-nav-item">
+      <span class="bottom-nav-icon">🌐</span>
+      <span class="bottom-nav-label">世界</span>
+    </a>
+    <a href="breathing.html" class="bottom-nav-item">
+      <span class="bottom-nav-icon">🧘</span>
+      <span class="bottom-nav-label">呼吸</span>
+    </a>
+  </div>
+
+  <!-- Service Worker 注册 -->
+  <script>
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', function() {
+        navigator.serviceWorker.register('sw.js').then(function(registration) {
+          console.log('Service Worker 注册成功：', registration.scope);
+        }).catch(function(error) {
+          console.log('Service Worker 注册失败：', error);
+        });
+      });
+    }
+  </script>
+</body>
+</html>

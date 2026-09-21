@@ -1,0 +1,615 @@
+/* TimeHub - 呼吸训练样式 */
+/* 版本: 1.0 */
+
+/* ===== 呼吸训练页面布局 ===== */
+.breathing-main {
+  flex: 1;
+  padding: var(--spacing-xl) 0;
+}
+
+.breathing-container {
+  max-width: var(--max-width);
+  margin: 0 auto;
+  padding: 0 var(--spacing-md);
+}
+
+/* ===== 模式选择区域 ===== */
+.mode-selection {
+  margin-bottom: var(--spacing-xxl);
+}
+
+.mode-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: var(--spacing-lg);
+  margin-top: var(--spacing-xl);
+}
+
+.mode-card {
+  background: var(--surface-color);
+  border-radius: var(--border-radius-lg);
+  padding: var(--spacing-xl);
+  border: 2px solid var(--border-color);
+  transition: all var(--transition-normal);
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-md);
+}
+
+.mode-card:hover {
+  border-color: var(--primary-color);
+  transform: translateY(-4px);
+  box-shadow: var(--shadow-lg);
+}
+
+.mode-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: var(--spacing-sm);
+}
+
+.mode-card-title {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--text-color);
+  margin: 0;
+}
+
+.mode-card-tag {
+  background: var(--primary-light);
+  color: white;
+  padding: var(--spacing-xs) var(--spacing-sm);
+  border-radius: var(--border-radius-sm);
+  font-size: 0.875rem;
+  font-weight: 600;
+}
+
+.mode-card-description p {
+  margin: 0;
+  color: var(--text-color);
+}
+
+.mode-card-description .mode-card-hint {
+  color: var(--text-secondary);
+  font-size: 0.875rem;
+  margin-top: var(--spacing-xs);
+}
+
+.mode-card-pattern {
+  display: flex;
+  gap: var(--spacing-sm);
+  flex-wrap: wrap;
+  margin: var(--spacing-md) 0;
+}
+
+.pattern-step {
+  padding: var(--spacing-xs) var(--spacing-sm);
+  border-radius: var(--border-radius-sm);
+  font-weight: 600;
+  font-size: 0.875rem;
+  min-width: 50px;
+  text-align: center;
+}
+
+.pattern-step.inhale {
+  background-color: rgba(67, 97, 238, 0.1);
+  color: var(--breathing-inhale-color);
+  border: 1px solid rgba(67, 97, 238, 0.2);
+}
+
+.pattern-step.hold {
+  background-color: rgba(108, 117, 125, 0.1);
+  color: var(--breathing-hold-color);
+  border: 1px solid rgba(108, 117, 125, 0.2);
+}
+
+.pattern-step.exhale {
+  background-color: rgba(56, 176, 0, 0.1);
+  color: var(--breathing-exhale-color);
+  border: 1px solid rgba(56, 176, 0, 0.2);
+}
+
+.mode-card-custom-settings {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: var(--spacing-md);
+  margin: var(--spacing-md) 0;
+}
+
+.custom-input-group {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-xs);
+}
+
+.custom-input-group label {
+  font-size: 0.875rem;
+  color: var(--text-secondary);
+  font-weight: 500;
+}
+
+.custom-input {
+  width: 100%;
+  padding: var(--spacing-sm);
+  border: 1px solid var(--border-color);
+  border-radius: var(--border-radius-sm);
+  font-family: 'DM Mono', monospace;
+  font-size: 1rem;
+  text-align: center;
+}
+
+.custom-input:focus {
+  outline: none;
+  border-color: var(--primary-color);
+}
+
+.custom-unit {
+  font-size: 0.875rem;
+  color: var(--text-secondary);
+  text-align: center;
+}
+
+.mode-select-btn {
+  margin-top: auto;
+  width: 100%;
+}
+
+/* ===== 主视图区域 ===== */
+.breathing-view {
+  background: var(--surface-color);
+  border-radius: var(--border-radius-lg);
+  padding: var(--spacing-xl);
+  box-shadow: var(--shadow-md);
+}
+
+.view-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: var(--spacing-xl);
+  padding-bottom: var(--spacing-md);
+  border-bottom: 1px solid var(--border-color);
+}
+
+.view-title {
+  font-size: 1.75rem;
+  font-weight: 700;
+  color: var(--text-color);
+  margin: 0;
+}
+
+.progress-indicator {
+  font-size: 1.125rem;
+  font-weight: 600;
+  color: var(--primary-color);
+  background: rgba(67, 97, 238, 0.1);
+  padding: var(--spacing-xs) var(--spacing-md);
+  border-radius: var(--border-radius-md);
+}
+
+/* ===== 呼吸圆圈动画 ===== */
+.breathing-circle-container {
+  position: relative;
+  width: 300px;
+  height: 300px;
+  margin: 0 auto var(--spacing-xl);
+}
+
+.progress-ring {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+}
+
+.progress-ring-svg {
+  transform: rotate(-90deg);
+  width: 100%;
+  height: 100%;
+}
+
+.progress-ring-bg {
+  fill: none;
+  stroke: var(--border-color);
+  stroke-width: 8;
+}
+
+.progress-ring-fill {
+  fill: none;
+  stroke: var(--breathing-inhale-color);
+  stroke-width: 8;
+  stroke-linecap: round;
+  stroke-dasharray: 879.65; /* 2 * π * 140 */
+  stroke-dashoffset: 879.65;
+  transition: stroke-dashoffset 1s linear, stroke var(--transition-normal);
+}
+
+.breathing-circle {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 120px;
+  height: 120px;
+  border-radius: 50%;
+  background: var(--surface-color);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: var(--shadow-lg);
+  transition: all var(--transition-normal);
+  z-index: 1;
+}
+
+.breathing-circle.inhale {
+  width: 200px;
+  height: 200px;
+  background-color: rgba(67, 97, 238, 0.1);
+  border: 4px solid var(--breathing-inhale-color);
+}
+
+.breathing-circle.hold {
+  background-color: rgba(108, 117, 125, 0.1);
+  border: 4px solid var(--breathing-hold-color);
+}
+
+.breathing-circle.exhale {
+  width: 120px;
+  height: 120px;
+  background-color: rgba(56, 176, 0, 0.1);
+  border: 4px solid var(--breathing-exhale-color);
+}
+
+.circle-inner {
+  text-align: center;
+}
+
+.phase-name {
+  font-size: 1.5rem;
+  font-weight: 700;
+  margin-bottom: var(--spacing-xs);
+  color: var(--text-color);
+  transition: color var(--transition-normal);
+}
+
+.breathing-circle.inhale .phase-name {
+  color: var(--breathing-inhale-color);
+}
+
+.breathing-circle.hold .phase-name {
+  color: var(--breathing-hold-color);
+}
+
+.breathing-circle.exhale .phase-name {
+  color: var(--breathing-exhale-color);
+}
+
+.time-count {
+  font-family: 'DM Mono', monospace;
+  font-size: 2.5rem;
+  font-weight: 500;
+  color: var(--text-color);
+  line-height: 1;
+}
+
+/* ===== 控制区 ===== */
+.breathing-controls {
+  max-width: 500px;
+  margin: 0 auto;
+}
+
+.control-buttons {
+  display: flex;
+  gap: var(--spacing-md);
+  justify-content: center;
+  margin-bottom: var(--spacing-xl);
+}
+
+.control-buttons .btn {
+  min-width: 140px;
+  padding: var(--spacing-md) var(--spacing-xl);
+  font-size: 1.125rem;
+  font-weight: 600;
+}
+
+.btn-icon {
+  margin-right: var(--spacing-sm);
+}
+
+.control-settings {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--spacing-xl);
+  margin-bottom: var(--spacing-xl);
+  padding: var(--spacing-lg);
+  background: rgba(0, 0, 0, 0.02);
+  border-radius: var(--border-radius-md);
+}
+
+@media (prefers-color-scheme: dark) {
+  .control-settings {
+    background: rgba(255, 255, 255, 0.05);
+  }
+}
+
+.setting-group {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-sm);
+}
+
+.setting-group label {
+  font-weight: 600;
+  color: var(--text-color);
+}
+
+.number-input {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+}
+
+.number-input input {
+  width: 60px;
+  padding: var(--spacing-sm);
+  border: 1px solid var(--border-color);
+  border-radius: var(--border-radius-sm);
+  font-family: 'DM Mono', monospace;
+  text-align: center;
+  font-size: 1rem;
+}
+
+.number-input input:focus {
+  outline: none;
+  border-color: var(--primary-color);
+}
+
+.number-btn {
+  width: 36px;
+  height: 36px;
+  border: 1px solid var(--border-color);
+  background: var(--surface-color);
+  border-radius: var(--border-radius-sm);
+  font-size: 1.25rem;
+  font-weight: 600;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all var(--transition-fast);
+}
+
+.number-btn:hover {
+  background: rgba(0, 0, 0, 0.05);
+  border-color: var(--primary-color);
+}
+
+@media (prefers-color-scheme: dark) {
+  .number-btn:hover {
+    background: rgba(255, 255, 255, 0.1);
+  }
+}
+
+.toggle-switch {
+  position: relative;
+  display: inline-block;
+  width: 52px;
+  height: 28px;
+}
+
+.toggle-switch input {
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.toggle-slider {
+  position: absolute;
+  cursor: pointer;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: var(--border-color);
+  border-radius: 34px;
+  transition: var(--transition-normal);
+}
+
+.toggle-slider:before {
+  position: absolute;
+  content: "";
+  height: 20px;
+  width: 20px;
+  left: 4px;
+  bottom: 4px;
+  background-color: white;
+  border-radius: 50%;
+  transition: var(--transition-normal);
+}
+
+input:checked + .toggle-slider {
+  background-color: var(--primary-color);
+}
+
+input:checked + .toggle-slider:before {
+  transform: translateX(24px);
+}
+
+.current-settings {
+  display: flex;
+  justify-content: space-between;
+  padding: var(--spacing-md);
+  background: rgba(0, 0, 0, 0.02);
+  border-radius: var(--border-radius-md);
+  font-size: 0.9375rem;
+}
+
+@media (prefers-color-scheme: dark) {
+  .current-settings {
+    background: rgba(255, 255, 255, 0.05);
+  }
+}
+
+.setting-info {
+  display: flex;
+  gap: var(--spacing-xs);
+}
+
+.setting-label {
+  color: var(--text-secondary);
+}
+
+.setting-value {
+  color: var(--text-color);
+  font-weight: 600;
+}
+
+/* ===== 完成状态显示 ===== */
+.completion-screen {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: var(--surface-color);
+  border-radius: var(--border-radius-lg);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 10;
+}
+
+.completion-content {
+  text-align: center;
+  max-width: 400px;
+  padding: var(--spacing-xl);
+}
+
+.completion-icon {
+  font-size: 4rem;
+  margin-bottom: var(--spacing-lg);
+  animation: bounce 1s ease infinite;
+}
+
+@keyframes bounce {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-10px); }
+}
+
+.completion-title {
+  font-size: 2rem;
+  font-weight: 700;
+  color: var(--text-color);
+  margin-bottom: var(--spacing-lg);
+}
+
+.completion-stats {
+  display: flex;
+  justify-content: center;
+  gap: var(--spacing-xl);
+  margin-bottom: var(--spacing-xl);
+}
+
+.stat-item {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-xs);
+}
+
+.stat-label {
+  color: var(--text-secondary);
+  font-size: 0.875rem;
+}
+
+.stat-value {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--primary-color);
+  font-family: 'DM Mono', monospace;
+}
+
+.completion-message {
+  color: var(--text-color);
+  font-size: 1.125rem;
+  line-height: 1.6;
+  margin-bottom: var(--spacing-xl);
+}
+
+.completion-actions {
+  display: flex;
+  gap: var(--spacing-md);
+  justify-content: center;
+}
+
+/* ===== 响应式设计 ===== */
+@media (max-width: 768px) {
+  .mode-cards {
+    grid-template-columns: 1fr;
+  }
+
+  .breathing-circle-container {
+    width: 250px;
+    height: 250px;
+  }
+
+  .breathing-circle {
+    width: 100px;
+    height: 100px;
+  }
+
+  .breathing-circle.inhale {
+    width: 160px;
+    height: 160px;
+  }
+
+  .control-settings {
+    grid-template-columns: 1fr;
+    gap: var(--spacing-lg);
+  }
+
+  .current-settings {
+    flex-direction: column;
+    gap: var(--spacing-sm);
+  }
+
+  .control-buttons .btn {
+    min-width: 120px;
+  }
+}
+
+@media (max-width: 480px) {
+  .breathing-circle-container {
+    width: 200px;
+    height: 200px;
+  }
+
+  .breathing-circle {
+    width: 80px;
+    height: 80px;
+  }
+
+  .breathing-circle.inhale {
+    width: 140px;
+    height: 140px;
+  }
+
+  .phase-name {
+    font-size: 1.25rem;
+  }
+
+  .time-count {
+    font-size: 2rem;
+  }
+
+  .control-buttons {
+    flex-direction: column;
+    align-items: center;
+  }
+
+  .control-buttons .btn {
+    width: 100%;
+    max-width: 200px;
+  }
+}

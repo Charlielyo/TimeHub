@@ -1,0 +1,635 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>世界时钟 - TimeHub</title>
+  <meta name="description" content="TimeHub世界时钟工具，查看全球主要城市实时时间、时差和时区转换。">
+  <link rel="stylesheet" href="css/base.css">
+  <link rel="stylesheet" href="css/layout.css">
+  <link rel="stylesheet" href="css/components.css">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&display=swap">
+  <link rel="icon" href="assets/icons/world-clock.svg" type="image/svg+xml">
+
+  <!-- iOS 支持 -->
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <link rel="apple-touch-icon" href="assets/icons/world-clock.svg">
+
+  <!-- PWA 相关 -->
+  <meta name="theme-color" content="#C0392B">
+  <link rel="manifest" href="manifest.json" crossorigin="use-credentials">
+  <style>
+    .worldclock-page { }
+
+    .wc-main {
+      flex: 1;
+      padding: var(--spacing-xl) 0;
+    }
+
+    .wc-container {
+      max-width: var(--max-width);
+      margin: 0 auto;
+      padding: 0 var(--spacing-md);
+      display: flex;
+      flex-direction: column;
+      gap: var(--spacing-xl);
+    }
+
+    .local-clock {
+      text-align: center;
+      padding: var(--spacing-xl);
+      background: var(--surface-color);
+      border-radius: var(--border-radius-lg);
+      border: 1px solid var(--border-color);
+    }
+
+    .local-time {
+      font-family: 'DM Mono', monospace;
+      font-size: 3.5rem;
+      font-weight: 500;
+      color: var(--text-color);
+      line-height: 1;
+    }
+
+    .local-date {
+      font-size: 1.125rem;
+      color: var(--text-secondary);
+      margin-top: var(--spacing-sm);
+    }
+
+    .search-bar {
+      display: flex;
+      gap: var(--spacing-sm);
+      max-width: 480px;
+      margin: 0 auto;
+      width: 100%;
+    }
+
+    .search-input {
+      flex: 1;
+      padding: var(--spacing-sm) var(--spacing-md);
+      border: 1px solid var(--border-color);
+      border-radius: var(--border-radius-md);
+      background: var(--surface-color);
+      color: var(--text-color);
+    }
+
+    .search-input:focus {
+      outline: none;
+      border-color: var(--primary-color);
+    }
+
+    .search-results {
+      position: absolute;
+      top: 100%;
+      left: 0;
+      right: 0;
+      background: var(--surface-color);
+      border: 1px solid var(--border-color);
+      border-radius: var(--border-radius-md);
+      max-height: 200px;
+      overflow-y: auto;
+      z-index: 10;
+      display: none;
+    }
+
+    .search-wrap {
+      position: relative;
+      flex: 1;
+    }
+
+    .search-result-item {
+      padding: var(--spacing-sm) var(--spacing-md);
+      cursor: pointer;
+      transition: background-color var(--transition-fast);
+    }
+
+    .search-result-item:hover {
+      background: rgba(67, 97, 238, 0.08);
+    }
+
+    .city-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: var(--spacing-md);
+    }
+
+    .city-card {
+      background: var(--surface-color);
+      border: 1px solid var(--border-color);
+      border-radius: var(--border-radius-lg);
+      padding: var(--spacing-md);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .city-card::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 4px;
+    }
+
+    .city-card.day::before {
+      background: #f8961e;
+    }
+
+    .city-card.night::before {
+      background: #4361ee;
+    }
+
+    .city-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      margin-bottom: var(--spacing-sm);
+    }
+
+    .city-name {
+      font-size: 1rem;
+      font-weight: 600;
+      color: var(--text-color);
+    }
+
+    .city-country {
+      font-size: 0.75rem;
+      color: var(--text-secondary);
+    }
+
+    .city-delete {
+      color: var(--text-secondary);
+      background: none;
+      border: none;
+      cursor: pointer;
+      font-size: 1.125rem;
+      line-height: 1;
+    }
+
+    .city-delete:hover {
+      color: #e63946;
+    }
+
+    .city-time {
+      font-family: 'DM Mono', monospace;
+      font-size: 1.75rem;
+      font-weight: 500;
+      color: var(--text-color);
+      margin: var(--spacing-sm) 0;
+    }
+
+    .city-offset {
+      font-size: 0.8125rem;
+      color: var(--text-secondary);
+      font-weight: 600;
+    }
+
+    .city-date {
+      font-size: 0.8125rem;
+      color: var(--text-secondary);
+      margin-top: 2px;
+    }
+
+    .converter-section {
+      background: var(--surface-color);
+      border: 1px solid var(--border-color);
+      border-radius: var(--border-radius-lg);
+      padding: var(--spacing-lg);
+    }
+
+    .converter-title {
+      font-size: 1.25rem;
+      font-weight: 700;
+      margin-bottom: var(--spacing-md);
+      color: var(--text-color);
+    }
+
+    .converter-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: var(--spacing-md);
+      align-items: center;
+      margin-bottom: var(--spacing-md);
+    }
+
+    .converter-select,
+    .converter-input {
+      padding: var(--spacing-sm) var(--spacing-md);
+      border: 1px solid var(--border-color);
+      border-radius: var(--border-radius-md);
+      background: var(--bg-color);
+      color: var(--text-color);
+      min-width: 140px;
+    }
+
+    .converter-results {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+      gap: var(--spacing-sm);
+    }
+
+    .converter-item {
+      padding: var(--spacing-sm);
+      background: var(--bg-color);
+      border-radius: var(--border-radius-md);
+      border: 1px solid var(--border-color);
+    }
+
+    .converter-item-name {
+      font-size: 0.8125rem;
+      color: var(--text-secondary);
+    }
+
+    .converter-item-time {
+      font-family: 'DM Mono', monospace;
+      font-size: 1rem;
+      font-weight: 500;
+      color: var(--text-color);
+      margin-top: 2px;
+    }
+
+    @media (max-width: 480px) {
+      .local-time {
+        font-size: 2.5rem;
+      }
+      .city-time {
+        font-size: 1.5rem;
+      }
+    }
+  </style>
+</head>
+<body class="worldclock-page">
+  <header class="navbar">
+    <div class="container">
+      <a href="index.html" class="logo">
+        <span class="logo-icon">⏱️</span>
+        TimeHub
+      </a>
+      <nav class="nav-links">
+        <a href="index.html" class="nav-link">仪表盘</a>
+        <a href="pomodoro.html" class="nav-link">番茄钟</a>
+        <a href="stopwatch.html" class="nav-link">秒表</a>
+        <a href="countdown.html" class="nav-link">多组倒计时</a>
+        <a href="worldclock.html" class="nav-link active">世界时钟</a>
+        <a href="deadline.html" class="nav-link">截止倒计时</a>
+        <a href="breathing.html" class="nav-link">呼吸训练</a>
+      </nav>
+      <button class="theme-toggle" aria-label="切换主题">
+        <span class="theme-icon">🌙</span>
+      </button>
+      <button class="mobile-menu-btn" aria-label="打开菜单" id="menu-btn">
+        <span class="menu-icon">☰</span>
+      </button>
+    </div>
+  </header>
+
+  <div class="mobile-menu" id="mobile-menu">
+    <div class="mobile-menu-content">
+      <a href="index.html" class="mobile-nav-link">仪表盘</a>
+      <a href="pomodoro.html" class="mobile-nav-link">番茄钟</a>
+      <a href="stopwatch.html" class="mobile-nav-link">秒表</a>
+      <a href="countdown.html" class="mobile-nav-link">多组倒计时</a>
+      <a href="worldclock.html" class="mobile-nav-link active">世界时钟</a>
+      <a href="deadline.html" class="mobile-nav-link">截止倒计时</a>
+      <a href="breathing.html" class="mobile-nav-link">呼吸训练</a>
+    </div>
+  </div>
+
+  <main class="wc-main">
+    <div class="wc-container">
+      <div class="local-clock">
+        <div class="local-time" id="local-time">00:00:00</div>
+        <div class="local-date" id="local-date">加载中...</div>
+      </div>
+
+      <div class="search-bar">
+        <div class="search-wrap">
+          <input type="text" class="search-input" id="city-search" placeholder="搜索城市（如：东京、伦敦）" autocomplete="off">
+          <div class="search-results" id="search-results"></div>
+        </div>
+      </div>
+
+      <div class="city-grid" id="city-grid"></div>
+
+      <div class="converter-section">
+        <h3 class="converter-title">时区转换器</h3>
+        <div class="converter-row">
+          <select class="converter-select" id="conv-city"></select>
+          <input type="datetime-local" class="converter-input" id="conv-time">
+          <button class="btn btn-primary" id="conv-btn">转换</button>
+        </div>
+        <div class="converter-results" id="conv-results"></div>
+      </div>
+    </div>
+  </main>
+
+  <footer class="footer">
+    <div class="container">
+      <div class="footer-content"><p>TimeHub - 简单而强大的时间管理工具</p></div>
+      <div class="footer-bottom">
+        <p>&copy; <span id="year"></span> TimeHub</p>
+        <p class="footer-version">版本 1.0.0</p>
+      </div>
+    </div>
+  </footer>
+
+  <script src="js/toast.js"></script>
+  <script src="js/common.js"></script>
+  <script>
+    (function() {
+      'use strict';
+
+      const CITIES = [
+        { name: '北京', nameEn: 'Beijing', timezone: 'Asia/Shanghai', country: '中国' },
+        { name: '上海', nameEn: 'Shanghai', timezone: 'Asia/Shanghai', country: '中国' },
+        { name: '香港', nameEn: 'Hong Kong', timezone: 'Asia/Hong_Kong', country: '中国' },
+        { name: '台北', nameEn: 'Taipei', timezone: 'Asia/Taipei', country: '中国' },
+        { name: '东京', nameEn: 'Tokyo', timezone: 'Asia/Tokyo', country: '日本' },
+        { name: '首尔', nameEn: 'Seoul', timezone: 'Asia/Seoul', country: '韩国' },
+        { name: '新加坡', nameEn: 'Singapore', timezone: 'Asia/Singapore', country: '新加坡' },
+        { name: '曼谷', nameEn: 'Bangkok', timezone: 'Asia/Bangkok', country: '泰国' },
+        { name: '迪拜', nameEn: 'Dubai', timezone: 'Asia/Dubai', country: '阿联酋' },
+        { name: '莫斯科', nameEn: 'Moscow', timezone: 'Europe/Moscow', country: '俄罗斯' },
+        { name: '伊斯坦布尔', nameEn: 'Istanbul', timezone: 'Europe/Istanbul', country: '土耳其' },
+        { name: '巴黎', nameEn: 'Paris', timezone: 'Europe/Paris', country: '法国' },
+        { name: '伦敦', nameEn: 'London', timezone: 'Europe/London', country: '英国' },
+        { name: '柏林', nameEn: 'Berlin', timezone: 'Europe/Berlin', country: '德国' },
+        { name: '罗马', nameEn: 'Rome', timezone: 'Europe/Rome', country: '意大利' },
+        { name: '马德里', nameEn: 'Madrid', timezone: 'Europe/Madrid', country: '西班牙' },
+        { name: '纽约', nameEn: 'New York', timezone: 'America/New_York', country: '美国' },
+        { name: '洛杉矶', nameEn: 'Los Angeles', timezone: 'America/Los_Angeles', country: '美国' },
+        { name: '芝加哥', nameEn: 'Chicago', timezone: 'America/Chicago', country: '美国' },
+        { name: '温哥华', nameEn: 'Vancouver', timezone: 'America/Vancouver', country: '加拿大' },
+        { name: '多伦多', nameEn: 'Toronto', timezone: 'America/Toronto', country: '加拿大' },
+        { name: '墨西哥城', nameEn: 'Mexico City', timezone: 'America/Mexico_City', country: '墨西哥' },
+        { name: '圣保罗', nameEn: 'Sao Paulo', timezone: 'America/Sao_Paulo', country: '巴西' },
+        { name: '布宜诺斯艾利斯', nameEn: 'Buenos Aires', timezone: 'America/Argentina/Buenos_Aires', country: '阿根廷' },
+        { name: '悉尼', nameEn: 'Sydney', timezone: 'Australia/Sydney', country: '澳大利亚' },
+        { name: '墨尔本', nameEn: 'Melbourne', timezone: 'Australia/Melbourne', country: '澳大利亚' },
+        { name: '奥克兰', nameEn: 'Auckland', timezone: 'Pacific/Auckland', country: '新西兰' },
+        { name: '开罗', nameEn: 'Cairo', timezone: 'Africa/Cairo', country: '埃及' },
+        { name: '约翰内斯堡', nameEn: 'Johannesburg', timezone: 'Africa/Johannesburg', country: '南非' },
+        { name: '孟买', nameEn: 'Mumbai', timezone: 'Asia/Kolkata', country: '印度' },
+        { name: '卡拉奇', nameEn: 'Karachi', timezone: 'Asia/Karachi', country: '巴基斯坦' },
+        { name: '雅加达', nameEn: 'Jakarta', timezone: 'Asia/Jakarta', country: '印尼' },
+        { name: '马尼拉', nameEn: 'Manila', timezone: 'Asia/Manila', country: '菲律宾' },
+        { name: '吉隆坡', nameEn: 'Kuala Lumpur', timezone: 'Asia/Kuala_Lumpur', country: '马来西亚' },
+        { name: '利雅得', nameEn: 'Riyadh', timezone: 'Asia/Riyadh', country: '沙特' },
+        { name: '特拉维夫', nameEn: 'Tel Aviv', timezone: 'Asia/Jerusalem', country: '以色列' },
+        { name: '华沙', nameEn: 'Warsaw', timezone: 'Europe/Warsaw', country: '波兰' },
+        { name: '斯德哥尔摩', nameEn: 'Stockholm', timezone: 'Europe/Stockholm', country: '瑞典' },
+        { name: '奥斯陆', nameEn: 'Oslo', timezone: 'Europe/Oslo', country: '挪威' },
+        { name: '赫尔辛基', nameEn: 'Helsinki', timezone: 'Europe/Helsinki', country: '芬兰' },
+        { name: '维也纳', nameEn: 'Vienna', timezone: 'Europe/Vienna', country: '奥地利' }
+      ];
+
+      const DEFAULT_CITIES = ['北京', '纽约', '伦敦', '东京'];
+      const STORAGE_KEY = 'timehub_worldclock_cities';
+
+      const localTimeEl = document.getElementById('local-time');
+      const localDateEl = document.getElementById('local-date');
+      const cityGrid = document.getElementById('city-grid');
+      const searchInput = document.getElementById('city-search');
+      const searchResults = document.getElementById('search-results');
+      const convCity = document.getElementById('conv-city');
+      const convTime = document.getElementById('conv-time');
+      const convBtn = document.getElementById('conv-btn');
+      const convResults = document.getElementById('conv-results');
+
+      let selectedNames = [];
+
+      function loadSelected() {
+        try {
+          const saved = JSON.parse(localStorage.getItem(STORAGE_KEY));
+          if (Array.isArray(saved) && saved.length) selectedNames = saved;
+        } catch (e) {}
+        if (!selectedNames.length) selectedNames = [...DEFAULT_CITIES];
+      }
+
+      function saveSelected() {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(selectedNames));
+      }
+
+      function getCityDate(timezone) {
+        const now = new Date();
+        const options = { timeZone: timezone, hour12: false, hour: '2-digit', minute: '2-digit', second: '2-digit' };
+        const timeStr = new Intl.DateTimeFormat('zh-CN', options).format(now);
+        const dateOptions = { timeZone: timezone, year: 'numeric', month: 'long', day: 'numeric', weekday: 'long' };
+        const dateStr = new Intl.DateTimeFormat('zh-CN', dateOptions).format(now);
+        const hour = parseInt(timeStr.split(':')[0], 10);
+        return { timeStr, dateStr, hour };
+      }
+
+      function getOffsetText(timezone) {
+        const now = new Date();
+        const localStr = now.toLocaleString('en-US', { timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone });
+        const targetStr = now.toLocaleString('en-US', { timeZone: timezone });
+        const localDate = new Date(localStr);
+        const targetDate = new Date(targetStr);
+        const diffMs = targetDate - localDate;
+        const diffH = diffMs / 3600000;
+        if (diffH === 0) return '与本地相同';
+        const sign = diffH > 0 ? '+' : '';
+        return `${sign}${diffH}h`;
+      }
+
+      function renderCities() {
+        cityGrid.innerHTML = '';
+        convCity.innerHTML = '';
+
+        selectedNames.forEach(name => {
+          const city = CITIES.find(c => c.name === name);
+          if (!city) return;
+
+          const { timeStr, dateStr, hour } = getCityDate(city.timezone);
+          const isDay = hour >= 6 && hour < 22;
+          const offset = getOffsetText(city.timezone);
+
+          const card = document.createElement('div');
+          card.className = `city-card ${isDay ? 'day' : 'night'}`;
+          card.innerHTML = `
+            <div class="city-header">
+              <div>
+                <div class="city-name">${city.name}</div>
+                <div class="city-country">${city.country}</div>
+              </div>
+              <button class="city-delete" data-name="${city.name}" aria-label="删除">×</button>
+            </div>
+            <div class="city-time">${timeStr}</div>
+            <div class="city-offset">${offset}</div>
+            <div class="city-date">${dateStr}</div>
+          `;
+          cityGrid.appendChild(card);
+
+          const opt = document.createElement('option');
+          opt.value = city.name;
+          opt.textContent = `${city.name} (${city.country})`;
+          convCity.appendChild(opt);
+        });
+
+        document.querySelectorAll('.city-delete').forEach(btn => {
+          btn.addEventListener('click', () => {
+            const name = btn.dataset.name;
+            selectedNames = selectedNames.filter(n => n !== name);
+            saveSelected();
+            renderCities();
+          });
+        });
+      }
+
+      function updateLocalClock() {
+        const now = new Date();
+        localTimeEl.textContent = now.toLocaleTimeString('zh-CN', { hour12: false });
+        localDateEl.textContent = now.toLocaleDateString('zh-CN', { year: 'numeric', month: 'long', day: 'numeric', weekday: 'long' });
+      }
+
+      function handleSearch() {
+        const val = searchInput.value.trim().toLowerCase();
+        searchResults.innerHTML = '';
+        if (!val) {
+          searchResults.style.display = 'none';
+          return;
+        }
+        const matches = CITIES.filter(c =>
+          !selectedNames.includes(c.name) &&
+          (c.name.includes(val) || c.nameEn.toLowerCase().includes(val) || c.country.includes(val))
+        ).slice(0, 8);
+
+        if (matches.length === 0) {
+          searchResults.style.display = 'none';
+          return;
+        }
+
+        matches.forEach(c => {
+          const div = document.createElement('div');
+          div.className = 'search-result-item';
+          div.innerHTML = `<strong>${c.name}</strong> <span style="color:var(--text-secondary)">· ${c.country}</span>`;
+          div.addEventListener('click', () => {
+            if (selectedNames.length >= 8) return;
+            selectedNames.push(c.name);
+            saveSelected();
+            renderCities();
+            searchInput.value = '';
+            searchResults.style.display = 'none';
+          });
+          searchResults.appendChild(div);
+        });
+        searchResults.style.display = 'block';
+      }
+
+      searchInput.addEventListener('input', handleSearch);
+      document.addEventListener('click', (e) => {
+        if (!e.target.closest('.search-wrap')) searchResults.style.display = 'none';
+      });
+
+      function doConvert() {
+        const cityName = convCity.value;
+        const inputTime = convTime.value;
+        if (!cityName || !inputTime) return;
+
+        const city = CITIES.find(c => c.name === cityName);
+        if (!city) return;
+
+        const baseDate = new Date(inputTime);
+        if (isNaN(baseDate)) return;
+
+        // 获取目标时区与 UTC 的偏移
+        const targetOffsetStr = new Date(baseDate.toLocaleString('en-US', { timeZone: city.timezone })).toISOString();
+        const localOffsetStr = baseDate.toISOString();
+        const targetOffsetDate = new Date(targetOffsetStr);
+        const diffMs = targetOffsetDate.getTime() - baseDate.getTime();
+        const utcDate = new Date(baseDate.getTime() - diffMs);
+
+        convResults.innerHTML = '';
+        selectedNames.forEach(name => {
+          if (name === cityName) return;
+          const c = CITIES.find(x => x.name === name);
+          if (!c) return;
+
+          const localStr = utcDate.toLocaleString('en-US', { timeZone: c.timezone });
+          const localDate = new Date(localStr);
+          const timeStr = localDate.toLocaleTimeString('zh-CN', { hour12: false, hour: '2-digit', minute: '2-digit' });
+          const dateStr = localDate.toLocaleDateString('zh-CN', { month: 'short', day: 'numeric', weekday: 'short' });
+
+          const item = document.createElement('div');
+          item.className = 'converter-item';
+          item.innerHTML = `
+            <div class="converter-item-name">${c.name}</div>
+            <div class="converter-item-time">${timeStr}</div>
+            <div style="font-size:0.75rem;color:var(--text-secondary)">${dateStr}</div>
+          `;
+          convResults.appendChild(item);
+        });
+      }
+
+      convBtn.addEventListener('click', doConvert);
+
+      // 初始化转换器默认时间为当前时间
+      const nowIsoLocal = new Date(new Date().getTime() - (new Date().getTimezoneOffset() * 60000)).toISOString().slice(0, 16);
+      convTime.value = nowIsoLocal;
+
+      loadSelected();
+      updateLocalClock();
+      renderCities();
+      setInterval(() => {
+        updateLocalClock();
+        renderCities();
+      }, 1000);
+
+      // mobile menu
+      document.getElementById('menu-btn').addEventListener('click', () => {
+        document.getElementById('mobile-menu').classList.toggle('show');
+      });
+      document.querySelectorAll('.mobile-nav-link').forEach(link => {
+        link.addEventListener('click', () => {
+          document.getElementById('mobile-menu').classList.remove('show');
+        });
+      });
+      document.getElementById('mobile-menu').addEventListener('click', function(e) {
+        if (e.target === this) this.classList.remove('show');
+      });
+
+      document.getElementById('year').textContent = new Date().getFullYear();
+    })();
+  </script>
+
+  <!-- 移动端底部导航 -->
+  <div class="mobile-bottom-nav">
+    <a href="index.html" class="bottom-nav-item">
+      <span class="bottom-nav-icon">🏠</span>
+      <span class="bottom-nav-label">首页</span>
+    </a>
+    <a href="pomodoro.html" class="bottom-nav-item">
+      <span class="bottom-nav-icon">🍅</span>
+      <span class="bottom-nav-label">番茄</span>
+    </a>
+    <a href="stopwatch.html" class="bottom-nav-item">
+      <span class="bottom-nav-icon">⏱️</span>
+      <span class="bottom-nav-label">秒表</span>
+    </a>
+    <a href="worldclock.html" class="bottom-nav-item active">
+      <span class="bottom-nav-icon">🌐</span>
+      <span class="bottom-nav-label">世界</span>
+    </a>
+    <a href="breathing.html" class="bottom-nav-item">
+      <span class="bottom-nav-icon">🧘</span>
+      <span class="bottom-nav-label">呼吸</span>
+    </a>
+  </div>
+
+  <!-- Service Worker 注册 -->
+  <script>
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', function() {
+        navigator.serviceWorker.register('sw.js').then(function(registration) {
+          console.log('Service Worker 注册成功：', registration.scope);
+        }).catch(function(error) {
+          console.log('Service Worker 注册失败：', error);
+        });
+      });
+    }
+  </script>
+</body>
+</html>

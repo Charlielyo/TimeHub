@@ -1,0 +1,21 @@
+{
+  "name": "TimeHub",
+  "short_name": "TimeHub",
+  "description": "一站式时间管理工具集合",
+  "start_url": "index.html",
+  "display": "standalone",
+  "background_color": "#f8f9fa",
+  "theme_color": "#C0392B",
+  "icons": [
+    {
+      "src": "assets/icons/dashboard.svg",
+      "sizes": "192x192",
+      "type": "image/svg+xml"
+    },
+    {
+      "src": "assets/icons/dashboard.svg",
+      "sizes": "512x512",
+      "type": "image/svg+xml"
+    }
+  ]
+}

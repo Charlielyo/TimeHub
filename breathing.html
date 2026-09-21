@@ -1,0 +1,398 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>呼吸训练 - TimeHub</title>
+  <meta name="description" content="TimeHub呼吸训练工具，提供4-7-8呼吸法、方形呼吸法等科学呼吸练习，帮助缓解压力、提升专注力。">
+  <meta name="keywords" content="呼吸训练,4-7-8呼吸,方形呼吸,减压,冥想,专注力">
+  <meta name="author" content="TimeHub Team">
+
+  <!-- 样式表 -->
+  <link rel="stylesheet" href="css/base.css">
+  <link rel="stylesheet" href="css/layout.css">
+  <link rel="stylesheet" href="css/components.css">
+  <link rel="stylesheet" href="css/breathing.css">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@300;400;500&display=swap">
+
+  <!-- 图标 -->
+  <link rel="icon" href="assets/icons/breathing.svg" type="image/svg+xml">
+
+  <!-- iOS 支持 -->
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <link rel="apple-touch-icon" href="assets/icons/breathing.svg">
+
+  <!-- PWA 相关 -->
+  <meta name="theme-color" content="#C0392B">
+  <link rel="manifest" href="manifest.json" crossorigin="use-credentials">
+
+  <!-- 呼吸训练特定样式 -->
+  <style>
+    :root {
+      --breathing-inhale-color: #4361ee;    /* 吸气颜色 - 蓝色 */
+      --breathing-hold-color: #6c757d;      /* 屏住颜色 - 灰色 */
+      --breathing-exhale-color: #38b000;    /* 呼气颜色 - 绿色 */
+      --breathing-custom-color: #9d4edd;    /* 自定义模式颜色 - 紫色 */
+      --breathing-background-light: linear-gradient(135deg, #f0f9ff 0%, #f0fff4 100%); /* 浅色背景渐变 */
+      --breathing-background-dark: linear-gradient(135deg, #0f172a 0%, #0c2418 100%); /* 深色背景渐变 */
+    }
+
+    .breathing-page {
+      background: var(--breathing-background-light);
+      min-height: 100vh;
+      transition: background-color var(--transition-normal);
+    }
+
+    @media (prefers-color-scheme: dark) {
+      .breathing-page {
+        background: var(--breathing-background-dark);
+      }
+    }
+
+    /* 呼吸训练容器 */
+    .breathing-container {
+      max-width: var(--max-width);
+      margin: 0 auto;
+      padding: var(--spacing-xl) var(--spacing-md);
+    }
+  </style>
+</head>
+<body class="breathing-page">
+  <!-- 导航栏 -->
+  <header class="navbar">
+    <div class="container">
+      <a href="index.html" class="logo">
+        <span class="logo-icon">⏱️</span>
+        TimeHub
+      </a>
+
+      <nav class="nav-links">
+        <a href="index.html" class="nav-link">仪表盘</a>
+        <a href="pomodoro.html" class="nav-link">番茄钟</a>
+        <a href="stopwatch.html" class="nav-link">秒表</a>
+        <a href="countdown.html" class="nav-link">多组倒计时</a>
+        <a href="worldclock.html" class="nav-link">世界时钟</a>
+        <a href="deadline.html" class="nav-link">截止倒计时</a>
+        <a href="breathing.html" class="nav-link active">呼吸训练</a>
+      </nav>
+
+      <!-- 主题切换按钮 -->
+      <button class="theme-toggle" aria-label="切换主题">
+        <span class="theme-icon">🌙</span>
+      </button>
+
+      <!-- 移动端菜单按钮 -->
+      <button class="btn btn-secondary mobile-menu-btn desktop-hidden" aria-label="打开菜单">
+        <span class="menu-icon">☰</span>
+      </button>
+    </div>
+  </header>
+
+  <!-- 移动端菜单（隐藏） -->
+  <div class="mobile-menu mobile-hidden">
+    <div class="mobile-menu-content">
+      <a href="index.html" class="mobile-nav-link">仪表盘</a>
+      <a href="pomodoro.html" class="mobile-nav-link">番茄钟</a>
+      <a href="stopwatch.html" class="mobile-nav-link">秒表</a>
+      <a href="countdown.html" class="mobile-nav-link">多组倒计时</a>
+      <a href="worldclock.html" class="mobile-nav-link">世界时钟</a>
+      <a href="deadline.html" class="mobile-nav-link">截止倒计时</a>
+      <a href="breathing.html" class="mobile-nav-link active">呼吸训练</a>
+    </div>
+  </div>
+
+  <!-- 主内容 -->
+  <main class="breathing-main">
+    <div class="breathing-container">
+      <!-- 模式选择区域 -->
+      <section class="mode-selection">
+        <div class="section-header">
+          <h1 class="section-title">呼吸训练</h1>
+          <p class="section-subtitle">选择一种呼吸模式开始练习</p>
+        </div>
+
+        <div class="mode-cards">
+          <!-- 4-7-8呼吸卡片 -->
+          <div class="mode-card" data-mode="four-seven-eight">
+            <div class="mode-card-header">
+              <h3 class="mode-card-title">4-7-8呼吸法</h3>
+              <span class="mode-card-tag">减压助眠</span>
+            </div>
+            <div class="mode-card-description">
+              <p>吸气4秒 → 屏住7秒 → 呼气8秒</p>
+              <p class="mode-card-hint">帮助放松神经系统，改善睡眠质量</p>
+            </div>
+            <div class="mode-card-pattern">
+              <span class="pattern-step inhale">吸4</span>
+              <span class="pattern-step hold">屏7</span>
+              <span class="pattern-step exhale">呼8</span>
+            </div>
+            <button class="btn btn-primary mode-select-btn" data-mode="four-seven-eight">
+              选择此模式
+            </button>
+          </div>
+
+          <!-- 方形呼吸卡片 -->
+          <div class="mode-card" data-mode="square">
+            <div class="mode-card-header">
+              <h3 class="mode-card-title">方形呼吸</h3>
+              <span class="mode-card-tag">专注冷静</span>
+            </div>
+            <div class="mode-card-description">
+              <p>吸气4秒 → 屏住4秒 → 呼气4秒 → 屏住4秒</p>
+              <p class="mode-card-hint">平衡神经系统，提升专注力和情绪稳定性</p>
+            </div>
+            <div class="mode-card-pattern">
+              <span class="pattern-step inhale">吸4</span>
+              <span class="pattern-step hold">屏4</span>
+              <span class="pattern-step exhale">呼4</span>
+              <span class="pattern-step hold">屏4</span>
+            </div>
+            <button class="btn btn-primary mode-select-btn" data-mode="square">
+              选择此模式
+            </button>
+          </div>
+
+          <!-- 自定义呼吸卡片 -->
+          <div class="mode-card" data-mode="custom">
+            <div class="mode-card-header">
+              <h3 class="mode-card-title">自定义</h3>
+              <span class="mode-card-tag">自由设置</span>
+            </div>
+            <div class="mode-card-description">
+              <p>自定义各阶段时长（1-30秒）</p>
+              <p class="mode-card-hint">根据自己的需求调整呼吸节奏</p>
+            </div>
+            <div class="mode-card-custom-settings">
+              <div class="custom-input-group">
+                <label>吸气</label>
+                <input type="number" min="1" max="30" value="4" class="custom-input inhale-input">
+                <span class="custom-unit">秒</span>
+              </div>
+              <div class="custom-input-group">
+                <label>屏住</label>
+                <input type="number" min="0" max="30" value="7" class="custom-input hold-input">
+                <span class="custom-unit">秒</span>
+              </div>
+              <div class="custom-input-group">
+                <label>呼气</label>
+                <input type="number" min="1" max="30" value="8" class="custom-input exhale-input">
+                <span class="custom-unit">秒</span>
+              </div>
+              <div class="custom-input-group">
+                <label>屏住</label>
+                <input type="number" min="0" max="30" value="0" class="custom-input hold2-input">
+                <span class="custom-unit">秒</span>
+              </div>
+            </div>
+            <button class="btn btn-primary mode-select-btn" data-mode="custom">
+              选择此模式
+            </button>
+          </div>
+        </div>
+      </section>
+
+      <!-- 主视图区域 -->
+      <section class="breathing-view" id="breathing-view" style="display: none;">
+        <div class="view-header">
+          <h2 class="view-title" id="current-mode-title">4-7-8呼吸法</h2>
+          <div class="progress-indicator">
+            <span id="current-round">1</span> / <span id="total-rounds">3</span> 轮
+          </div>
+        </div>
+
+        <!-- 大圆圈动画 -->
+        <div class="breathing-circle-container">
+          <div class="progress-ring">
+            <svg width="300" height="300" viewBox="0 0 300 300" class="progress-ring-svg">
+              <circle cx="150" cy="150" r="140" class="progress-ring-bg"></circle>
+              <circle cx="150" cy="150" r="140" class="progress-ring-fill"></circle>
+            </svg>
+          </div>
+          <div class="breathing-circle" id="breathing-circle">
+            <div class="circle-inner">
+              <div class="phase-name" id="current-phase">准备开始</div>
+              <div class="time-count" id="time-count">--</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 控制区 -->
+        <div class="breathing-controls">
+          <div class="control-buttons">
+            <button class="btn btn-primary btn-lg" id="start-pause-btn">
+              <span class="btn-icon">▶️</span>
+              <span class="btn-text">开始</span>
+            </button>
+            <button class="btn btn-secondary btn-lg" id="reset-btn" disabled>
+              <span class="btn-icon">↺</span>
+              <span class="btn-text">重置</span>
+            </button>
+          </div>
+
+          <div class="control-settings">
+            <div class="setting-group">
+              <label for="rounds-input">训练轮数</label>
+              <div class="number-input">
+                <button class="number-btn minus" id="rounds-minus">-</button>
+                <input type="number" id="rounds-input" min="1" max="20" value="3">
+                <button class="number-btn plus" id="rounds-plus">+</button>
+              </div>
+            </div>
+
+            <div class="setting-group">
+              <label for="sound-toggle">音效提示</label>
+              <div class="toggle-switch">
+                <input type="checkbox" id="sound-toggle" checked>
+                <span class="toggle-slider"></span>
+              </div>
+            </div>
+          </div>
+
+          <div class="current-settings">
+            <div class="setting-info">
+              <span class="setting-label">当前模式:</span>
+              <span class="setting-value" id="current-mode-display">4-7-8呼吸法</span>
+            </div>
+            <div class="setting-info">
+              <span class="setting-label">时长:</span>
+              <span class="setting-value" id="current-duration">19秒/轮</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- 完成状态显示 -->
+        <div class="completion-screen" id="completion-screen" style="display: none;">
+          <div class="completion-content">
+            <div class="completion-icon">🎉</div>
+            <h3 class="completion-title">训练完成！</h3>
+            <div class="completion-stats">
+              <div class="stat-item">
+                <span class="stat-label">用时</span>
+                <span class="stat-value" id="completion-time">00:00</span>
+              </div>
+              <div class="stat-item">
+                <span class="stat-label">完成轮数</span>
+                <span class="stat-value" id="completion-rounds">3</span>
+              </div>
+            </div>
+            <p class="completion-message" id="completion-message">很棒！您已经完成了一次完整的呼吸训练。</p>
+            <div class="completion-actions">
+              <button class="btn btn-primary" id="restart-btn">重新开始</button>
+              <button class="btn btn-outline" id="back-to-modes-btn">选择其他模式</button>
+            </div>
+          </div>
+        </div>
+      </section>
+    </div>
+  </main>
+
+  <!-- 页脚 -->
+  <footer class="footer">
+    <div class="container">
+      <div class="footer-content">
+        <div class="footer-section">
+          <h3 class="footer-title">TimeHub</h3>
+          <p class="footer-description">
+            一个简单而强大的时间管理工具集合，帮助您更高效地利用每一分钟。
+          </p>
+        </div>
+
+        <div class="footer-section">
+          <h3 class="footer-title">快速链接</h3>
+          <ul class="footer-links">
+            <li><a href="index.html">仪表盘</a></li>
+            <li><a href="pomodoro.html">番茄钟</a></li>
+            <li><a href="stopwatch.html">秒表</a></li>
+            <li><a href="countdown.html">多组倒计时</a></li>
+            <li><a href="worldclock.html">世界时钟</a></li>
+            <li><a href="deadline.html">截止倒计时</a></li>
+            <li><a href="breathing.html">呼吸训练</a></li>
+          </ul>
+        </div>
+
+        <div class="footer-section">
+          <h3 class="footer-title">反馈与支持</h3>
+          <p class="footer-description">
+            如果您遇到任何问题或有改进建议，欢迎联系我们。
+          </p>
+        </div>
+      </div>
+
+      <div class="footer-bottom">
+        <p>&copy; <span id="current-year">2024</span> TimeHub. 保留所有权利。</p>
+      </div>
+    </div>
+  </footer>
+
+  <!-- JavaScript 文件 -->
+  <script src="js/common.js"></script>
+  <script src="js/toast.js"></script>
+  <script src="js/utils.js"></script>
+  <script src="js/breathing.js"></script>
+
+  <!-- 内联脚本 -->
+  <script>
+    // 设置当前年份
+    document.getElementById('current-year').textContent = new Date().getFullYear();
+
+    // 移动端菜单切换
+    document.querySelector('.mobile-menu-btn')?.addEventListener('click', function() {
+      const menu = document.querySelector('.mobile-menu');
+      menu.classList.toggle('mobile-hidden');
+    });
+
+    // 点击菜单项后关闭移动菜单
+    document.querySelectorAll('.mobile-nav-link').forEach(link => {
+      link.addEventListener('click', () => {
+        document.querySelector('.mobile-menu').classList.add('mobile-hidden');
+      });
+    });
+
+    // 点击遮罩层关闭菜单
+    document.querySelector('.mobile-menu')?.addEventListener('click', function(e) {
+      if (e.target === this) {
+        this.classList.add('mobile-hidden');
+      }
+    });
+  </script>
+
+  <!-- 移动端底部导航 -->
+  <div class="mobile-bottom-nav">
+    <a href="index.html" class="bottom-nav-item">
+      <span class="bottom-nav-icon">🏠</span>
+      <span class="bottom-nav-label">首页</span>
+    </a>
+    <a href="pomodoro.html" class="bottom-nav-item">
+      <span class="bottom-nav-icon">🍅</span>
+      <span class="bottom-nav-label">番茄</span>
+    </a>
+    <a href="stopwatch.html" class="bottom-nav-item">
+      <span class="bottom-nav-icon">⏱️</span>
+      <span class="bottom-nav-label">秒表</span>
+    </a>
+    <a href="worldclock.html" class="bottom-nav-item">
+      <span class="bottom-nav-icon">🌐</span>
+      <span class="bottom-nav-label">世界</span>
+    </a>
+    <a href="breathing.html" class="bottom-nav-item active">
+      <span class="bottom-nav-icon">🧘</span>
+      <span class="bottom-nav-label">呼吸</span>
+    </a>
+  </div>
+
+  <!-- Service Worker 注册 -->
+  <script>
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', function() {
+        navigator.serviceWorker.register('sw.js').then(function(registration) {
+          console.log('Service Worker 注册成功：', registration.scope);
+        }).catch(function(error) {
+          console.log('Service Worker 注册失败：', error);
+        });
+      });
+    }
+  </script>
+</body>
+</html>

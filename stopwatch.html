@@ -1,0 +1,444 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>秒表 - TimeHub</title>
+  <meta name="description" content="TimeHub秒表工具，精准计时、记录圈速、支持键盘快捷键。">
+
+  <link rel="stylesheet" href="css/base.css">
+  <link rel="stylesheet" href="css/layout.css">
+  <link rel="stylesheet" href="css/components.css">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@300;400;500&display=swap">
+  <link rel="icon" href="assets/icons/stopwatch.svg" type="image/svg+xml">
+
+  <!-- iOS 支持 -->
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <link rel="apple-touch-icon" href="assets/icons/stopwatch.svg">
+
+  <!-- PWA 相关 -->
+  <meta name="theme-color" content="#C0392B">
+  <link rel="manifest" href="manifest.json" crossorigin="use-credentials">
+
+  <style>
+    .stopwatch-page {
+      --sw-color: var(--primary-color);
+    }
+
+    .stopwatch-main {
+      flex: 1;
+      padding: var(--spacing-xl) 0;
+    }
+
+    .stopwatch-container {
+      max-width: 720px;
+      margin: 0 auto;
+      padding: 0 var(--spacing-md);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: var(--spacing-xl);
+    }
+
+    .sw-display {
+      font-family: 'DM Mono', monospace;
+      font-size: 5rem;
+      font-weight: 500;
+      color: var(--text-color);
+      text-align: center;
+      line-height: 1;
+      letter-spacing: -0.02em;
+    }
+
+    .sw-display .ms {
+      font-size: 0.5em;
+      color: var(--text-secondary);
+      min-width: 1.2em;
+      display: inline-block;
+      text-align: left;
+    }
+
+    .sw-controls {
+      display: flex;
+      gap: var(--spacing-md);
+    }
+
+    .sw-controls .btn {
+      min-width: 120px;
+      padding: var(--spacing-md) var(--spacing-xl);
+      font-size: 1.125rem;
+    }
+
+    .sw-laps {
+      width: 100%;
+      background: var(--surface-color);
+      border: 1px solid var(--border-color);
+      border-radius: var(--border-radius-lg);
+      overflow: hidden;
+    }
+
+    .sw-laps-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: var(--spacing-md) var(--spacing-lg);
+      border-bottom: 1px solid var(--border-color);
+    }
+
+    .sw-laps-title {
+      font-size: 1rem;
+      font-weight: 600;
+      color: var(--text-color);
+    }
+
+    .sw-laps-empty {
+      padding: var(--spacing-xl);
+      text-align: center;
+      color: var(--text-secondary);
+    }
+
+    .sw-laps-table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+
+    .sw-laps-table th,
+    .sw-laps-table td {
+      padding: var(--spacing-sm) var(--spacing-md);
+      text-align: left;
+      font-size: 0.9375rem;
+    }
+
+    .sw-laps-table th {
+      background: var(--bg-color);
+      color: var(--text-secondary);
+      font-weight: 600;
+    }
+
+    .sw-laps-table tr + tr td {
+      border-top: 1px solid var(--border-color);
+    }
+
+    .sw-laps-table td {
+      font-family: 'DM Mono', monospace;
+    }
+
+    .sw-laps-table .lap-fast {
+      color: #2a9d8f;
+      font-weight: 600;
+    }
+
+    .sw-laps-table .lap-slow {
+      color: #e63946;
+      font-weight: 600;
+    }
+
+    @media (max-width: 480px) {
+      .sw-display {
+        font-size: 3.25rem;
+      }
+
+      .sw-controls .btn {
+        min-width: 90px;
+        padding: var(--spacing-sm) var(--spacing-md);
+        font-size: 1rem;
+      }
+    }
+  </style>
+</head>
+<body class="stopwatch-page">
+  <header class="navbar">
+    <div class="container">
+      <a href="index.html" class="logo">
+        <span class="logo-icon">⏱️</span>
+        TimeHub
+      </a>
+      <nav class="nav-links">
+        <a href="index.html" class="nav-link">仪表盘</a>
+        <a href="pomodoro.html" class="nav-link">番茄钟</a>
+        <a href="stopwatch.html" class="nav-link active">秒表</a>
+        <a href="countdown.html" class="nav-link">多组倒计时</a>
+        <a href="worldclock.html" class="nav-link">世界时钟</a>
+        <a href="deadline.html" class="nav-link">截止倒计时</a>
+        <a href="breathing.html" class="nav-link">呼吸训练</a>
+      </nav>
+      <button class="theme-toggle" aria-label="切换主题">
+        <span class="theme-icon">🌙</span>
+      </button>
+      <button class="mobile-menu-btn" aria-label="打开菜单" id="menu-btn">
+        <span class="menu-icon">☰</span>
+      </button>
+    </div>
+  </header>
+
+  <div class="mobile-menu" id="mobile-menu">
+    <div class="mobile-menu-content">
+      <a href="index.html" class="mobile-nav-link">仪表盘</a>
+      <a href="pomodoro.html" class="mobile-nav-link">番茄钟</a>
+      <a href="stopwatch.html" class="mobile-nav-link active">秒表</a>
+      <a href="countdown.html" class="mobile-nav-link">多组倒计时</a>
+      <a href="worldclock.html" class="mobile-nav-link">世界时钟</a>
+      <a href="deadline.html" class="mobile-nav-link">截止倒计时</a>
+      <a href="breathing.html" class="mobile-nav-link">呼吸训练</a>
+    </div>
+  </div>
+
+  <main class="stopwatch-main">
+    <div class="stopwatch-container">
+      <div class="sw-display" id="sw-display" aria-live="polite">
+        00:00<span class="ms">.00</span>
+      </div>
+
+      <div class="sw-controls">
+        <button class="btn btn-primary" id="btn-toggle">开始</button>
+        <button class="btn btn-secondary" id="btn-lap" disabled>圈速</button>
+        <button class="btn btn-outline" id="btn-reset">重置</button>
+      </div>
+
+      <div class="sw-laps" id="laps-card" hidden>
+        <div class="sw-laps-header">
+          <span class="sw-laps-title">圈速记录</span>
+          <button class="btn btn-sm btn-outline" id="btn-copy">复制全部</button>
+        </div>
+        <div id="laps-body">
+          <table class="sw-laps-table">
+            <thead>
+              <tr>
+                <th>序号</th>
+                <th>本圈时间</th>
+                <th>总时间</th>
+              </tr>
+            </thead>
+            <tbody id="laps-list"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <footer class="footer">
+    <div class="container">
+      <div class="footer-content">
+        <p>TimeHub - 简单而强大的时间管理工具</p>
+      </div>
+      <div class="footer-bottom">
+        <p>&copy; <span id="year"></span> TimeHub</p>
+        <p class="footer-version">版本 1.0.0</p>
+      </div>
+    </div>
+  </footer>
+
+  <script src="js/toast.js"></script>
+  <script src="js/common.js"></script>
+  <script>
+    (function() {
+      'use strict';
+
+      const display = document.getElementById('sw-display');
+      const btnToggle = document.getElementById('btn-toggle');
+      const btnLap = document.getElementById('btn-lap');
+      const btnReset = document.getElementById('btn-reset');
+      const btnCopy = document.getElementById('btn-copy');
+      const lapsCard = document.getElementById('laps-card');
+      const lapsList = document.getElementById('laps-list');
+
+      let state = 'idle'; // idle | running | paused
+      let startTime = 0;
+      let elapsed = 0;
+      let timerId = null;
+      let laps = []; // { split, total }
+
+      function formatTime(ms) {
+        const totalSeconds = Math.floor(ms / 1000);
+        const minutes = Math.floor(totalSeconds / 60);
+        const seconds = totalSeconds % 60;
+        const hundredths = Math.floor((ms % 1000) / 10);
+        return `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}.${hundredths.toString().padStart(2, '0')}`;
+      }
+
+      function updateDisplay() {
+        const current = state === 'running' ? Date.now() - startTime + elapsed : elapsed;
+        const text = formatTime(current);
+        const [base, ms] = text.split('.');
+        display.innerHTML = `${base}<span class="ms">.${ms}</span>`;
+      }
+
+      function tick() {
+        if (state !== 'running') return;
+        updateDisplay();
+        timerId = requestAnimationFrame(tick);
+      }
+
+      function setState(s) {
+        state = s;
+        if (state === 'running') {
+          btnToggle.textContent = '暂停';
+          btnToggle.classList.remove('btn-primary');
+          btnToggle.classList.add('btn-secondary');
+          btnLap.disabled = false;
+        } else if (state === 'paused') {
+          btnToggle.textContent = '继续';
+          btnToggle.classList.remove('btn-secondary');
+          btnToggle.classList.add('btn-primary');
+          btnLap.disabled = true;
+        } else {
+          btnToggle.textContent = '开始';
+          btnToggle.classList.remove('btn-secondary');
+          btnToggle.classList.add('btn-primary');
+          btnLap.disabled = true;
+        }
+      }
+
+      function start() {
+        if (state === 'running') return;
+        startTime = Date.now();
+        setState('running');
+        tick();
+      }
+
+      function pause() {
+        if (state !== 'running') return;
+        elapsed += Date.now() - startTime;
+        if (timerId) cancelAnimationFrame(timerId);
+        setState('paused');
+        updateDisplay();
+      }
+
+      function reset() {
+        if (timerId) cancelAnimationFrame(timerId);
+        state = 'idle';
+        startTime = 0;
+        elapsed = 0;
+        laps = [];
+        setState('idle');
+        updateDisplay();
+        lapsCard.hidden = true;
+        lapsList.innerHTML = '';
+      }
+
+      function recordLap() {
+        if (state !== 'running') return;
+        const total = Date.now() - startTime + elapsed;
+        const lastTotal = laps.length > 0 ? laps[laps.length - 1].total : 0;
+        const split = total - lastTotal;
+        laps.push({ split, total });
+        renderLaps();
+      }
+
+      function renderLaps() {
+        if (laps.length === 0) {
+          lapsCard.hidden = true;
+          return;
+        }
+        lapsCard.hidden = false;
+
+        const splits = laps.map(l => l.split);
+        const minSplit = Math.min(...splits);
+        const maxSplit = Math.max(...splits);
+
+        lapsList.innerHTML = laps.map((lap, i) => {
+          let cls = '';
+          if (laps.length > 1) {
+            if (lap.split === minSplit) cls = 'lap-fast';
+            else if (lap.split === maxSplit) cls = 'lap-slow';
+          }
+          return `
+            <tr class="${cls}">
+              <td>#${i + 1}</td>
+              <td>${formatTime(lap.split)}</td>
+              <td>${formatTime(lap.total)}</td>
+            </tr>
+          `;
+        }).join('');
+      }
+
+      function copyLaps() {
+        if (laps.length === 0) return;
+        const lines = laps.map((lap, i) => `#${i + 1}\t${formatTime(lap.split)}\t${formatTime(lap.total)}`);
+        const text = ['秒表圈速记录', '序号\t本圈时间\t总时间', ...lines].join('\n');
+        navigator.clipboard.writeText(text).then(() => {
+          const original = btnCopy.textContent;
+          btnCopy.textContent = '已复制';
+          setTimeout(() => btnCopy.textContent = original, 1500);
+        }).catch(() => {
+          alert('复制失败，请手动复制');
+        });
+      }
+
+      btnToggle.addEventListener('click', () => {
+        if (state === 'running') pause(); else start();
+      });
+      btnLap.addEventListener('click', recordLap);
+      btnReset.addEventListener('click', reset);
+      btnCopy.addEventListener('click', copyLaps);
+
+      document.addEventListener('keydown', (e) => {
+        if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
+        if (e.code === 'Space') {
+          e.preventDefault();
+          if (state === 'running') pause(); else start();
+        } else if (e.code === 'KeyL') {
+          e.preventDefault();
+          recordLap();
+        } else if (e.code === 'KeyR') {
+          e.preventDefault();
+          reset();
+        }
+      });
+
+      // 移动端菜单
+      document.getElementById('menu-btn').addEventListener('click', () => {
+        document.getElementById('mobile-menu').classList.toggle('show');
+      });
+      document.querySelectorAll('.mobile-nav-link').forEach(link => {
+        link.addEventListener('click', () => {
+          document.getElementById('mobile-menu').classList.remove('show');
+        });
+      });
+      document.getElementById('mobile-menu').addEventListener('click', function(e) {
+        if (e.target === this) this.classList.remove('show');
+      });
+
+      document.getElementById('year').textContent = new Date().getFullYear();
+    })();
+  </script>
+
+  <!-- 移动端底部导航 -->
+  <div class="mobile-bottom-nav">
+    <a href="index.html" class="bottom-nav-item">
+      <span class="bottom-nav-icon">🏠</span>
+      <span class="bottom-nav-label">首页</span>
+    </a>
+    <a href="pomodoro.html" class="bottom-nav-item">
+      <span class="bottom-nav-icon">🍅</span>
+      <span class="bottom-nav-label">番茄</span>
+    </a>
+    <a href="stopwatch.html" class="bottom-nav-item active">
+      <span class="bottom-nav-icon">⏱️</span>
+      <span class="bottom-nav-label">秒表</span>
+    </a>
+    <a href="worldclock.html" class="bottom-nav-item">
+      <span class="bottom-nav-icon">🌐</span>
+      <span class="bottom-nav-label">世界</span>
+    </a>
+    <a href="breathing.html" class="bottom-nav-item">
+      <span class="bottom-nav-icon">🧘</span>
+      <span class="bottom-nav-label">呼吸</span>
+    </a>
+  </div>
+
+  <!-- Service Worker 注册 -->
+  <script>
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', function() {
+        navigator.serviceWorker.register('sw.js').then(function(registration) {
+          console.log('Service Worker 注册成功：', registration.scope);
+        }).catch(function(error) {
+          console.log('Service Worker 注册失败：', error);
+        });
+      });
+    }
+  </script>
+</body>
+</html>

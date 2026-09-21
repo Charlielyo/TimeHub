@@ -1,0 +1,358 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>TimeHub - 您的时间管理工具集</title>
+  <meta name="description" content="TimeHub是一个集成了番茄钟、秒表、多组倒计时、世界时钟、截止倒计时和呼吸训练的时间管理工具网站。">
+  <meta name="keywords" content="时间管理,番茄钟,秒表,倒计时,世界时钟,呼吸训练,工具集">
+  <meta name="author" content="TimeHub Team">
+
+  <!-- 样式表 -->
+  <link rel="stylesheet" href="css/base.css">
+  <link rel="stylesheet" href="css/layout.css">
+  <link rel="stylesheet" href="css/components.css">
+  <link rel="stylesheet" href="css/dashboard.css">
+
+  <!-- 图标 -->
+  <link rel="icon" href="assets/icons/dashboard.svg" type="image/svg+xml">
+
+  <!-- PWA 相关（可选） -->
+  <meta name="theme-color" content="#C0392B">
+  <link rel="manifest" href="manifest.json" crossorigin="use-credentials">
+
+  <!-- iOS 支持 -->
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <link rel="apple-touch-icon" href="assets/icons/dashboard.svg">
+</head>
+<body>
+  <!-- 导航栏 -->
+  <header class="navbar">
+    <div class="container">
+      <a href="index.html" class="logo">
+        <span class="logo-icon">⏱️</span>
+        TimeHub
+      </a>
+
+      <nav class="nav-links">
+        <a href="index.html" class="nav-link active">仪表盘</a>
+        <a href="pomodoro.html" class="nav-link">番茄钟</a>
+        <a href="stopwatch.html" class="nav-link">秒表</a>
+        <a href="countdown.html" class="nav-link">多组倒计时</a>
+        <a href="worldclock.html" class="nav-link">世界时钟</a>
+        <a href="deadline.html" class="nav-link">截止倒计时</a>
+        <a href="breathing.html" class="nav-link">呼吸训练</a>
+      </nav>
+
+      <!-- 主题切换按钮 -->
+      <button class="theme-toggle" aria-label="切换主题">
+        <span class="theme-icon">🌙</span>
+      </button>
+
+      <!-- 移动端菜单按钮 -->
+      <button class="btn btn-secondary mobile-menu-btn desktop-hidden" aria-label="打开菜单">
+        <span class="menu-icon">☰</span>
+      </button>
+    </div>
+  </header>
+
+  <!-- 移动端菜单（隐藏） -->
+  <div class="mobile-menu mobile-hidden">
+    <div class="mobile-menu-content">
+      <a href="index.html" class="mobile-nav-link active">仪表盘</a>
+      <a href="pomodoro.html" class="mobile-nav-link">番茄钟</a>
+      <a href="stopwatch.html" class="mobile-nav-link">秒表</a>
+      <a href="countdown.html" class="mobile-nav-link">多组倒计时</a>
+      <a href="worldclock.html" class="mobile-nav-link">世界时钟</a>
+      <a href="deadline.html" class="mobile-nav-link">截止倒计时</a>
+      <a href="breathing.html" class="mobile-nav-link">呼吸训练</a>
+    </div>
+  </div>
+
+  <!-- 主内容 -->
+  <main class="main-content">
+    <div class="container">
+      <!-- 顶部大区域：实时时钟、日期、问候语 -->
+      <section class="hero-section">
+        <div class="hero-content">
+          <div class="clock-container">
+            <div class="digital-clock" id="digital-clock">00:00:00</div>
+            <div class="date-greeting">
+              <span class="today-date" id="today-date">2024年1月1日 星期一</span>
+              <span class="greeting" id="greeting">早上好</span>
+            </div>
+          </div>
+          <div class="hero-description">
+            <p>高效管理时间，掌控每一天。TimeHub 为您提供专业的时间管理工具，助您提升生产力。</p>
+          </div>
+        </div>
+      </section>
+
+      <!-- 功能入口卡片网格 -->
+      <section class="tools-section">
+        <div class="section-header">
+          <h2 class="section-title">时间管理工具</h2>
+          <p class="section-subtitle">选择工具开始使用</p>
+        </div>
+
+        <div class="tools-grid">
+          <!-- 番茄钟卡片 -->
+          <a href="pomodoro.html" class="tool-card">
+            <div class="tool-icon-wrapper">
+              <img src="assets/icons/pomodoro.svg" alt="番茄钟" class="tool-icon">
+            </div>
+            <h3 class="tool-name">番茄钟</h3>
+            <p class="tool-description">25分钟专注工作，5分钟休息，提高效率</p>
+          </a>
+
+          <!-- 秒表卡片 -->
+          <a href="stopwatch.html" class="tool-card">
+            <div class="tool-icon-wrapper">
+              <img src="assets/icons/stopwatch.svg" alt="秒表" class="tool-icon">
+            </div>
+            <h3 class="tool-name">秒表</h3>
+            <p class="tool-description">精确计时，支持计圈和暂停功能</p>
+          </a>
+
+          <!-- 多组倒计时卡片 -->
+          <a href="countdown.html" class="tool-card">
+            <div class="tool-icon-wrapper">
+              <img src="assets/icons/multi-timer.svg" alt="多组倒计时" class="tool-icon">
+            </div>
+            <h3 class="tool-name">多组倒计时</h3>
+            <p class="tool-description">同时管理多个倒计时，适合复杂任务</p>
+          </a>
+
+          <!-- 世界时钟卡片 -->
+          <a href="worldclock.html" class="tool-card">
+            <div class="tool-icon-wrapper">
+              <img src="assets/icons/world-clock.svg" alt="世界时钟" class="tool-icon">
+            </div>
+            <h3 class="tool-name">世界时钟</h3>
+            <p class="tool-description">查看全球时区，方便跨时区协作</p>
+          </a>
+
+          <!-- 截止倒计时卡片 -->
+          <a href="deadline.html" class="tool-card">
+            <div class="tool-icon-wrapper">
+              <img src="assets/icons/deadline.svg" alt="截止倒计时" class="tool-icon">
+            </div>
+            <h3 class="tool-name">截止倒计时</h3>
+            <p class="tool-description">设置重要日期，跟踪剩余时间</p>
+          </a>
+
+          <!-- 呼吸训练卡片 -->
+          <a href="breathing.html" class="tool-card">
+            <div class="tool-icon-wrapper">
+              <img src="assets/icons/breathing.svg" alt="呼吸训练" class="tool-icon">
+            </div>
+            <h3 class="tool-name">呼吸训练</h3>
+            <p class="tool-description">4-7-8呼吸法，缓解压力恢复专注</p>
+          </a>
+        </div>
+      </section>
+
+      <!-- 底部小区域：今日番茄数预览 -->
+      <section class="tomato-preview">
+        <div class="section-header">
+          <h2 class="section-title">今日番茄数</h2>
+        </div>
+        <div class="tomato-stats">
+          <div class="tomato-count">
+            <span class="tomato-number" id="today-tomatoes">0</span>
+            <span class="tomato-label">已完成番茄</span>
+          </div>
+          <div class="tomato-hint">
+            <p>使用番茄钟开始您的高效工作之旅</p>
+            <a href="pomodoro.html" class="btn btn-primary btn-sm">开始番茄钟</a>
+          </div>
+        </div>
+      </section>
+    </div>
+  </main>
+
+  <!-- 页脚 -->
+  <footer class="footer">
+    <div class="container">
+      <div class="footer-content">
+        <div class="footer-section">
+          <h3 class="footer-title">TimeHub</h3>
+          <p class="footer-description">
+            一个简单而强大的时间管理工具集合，帮助您更高效地利用每一分钟。
+          </p>
+          <div class="footer-social">
+            <a href="#" class="social-link" aria-label="GitHub">
+              <span class="social-icon">🐙</span>
+            </a>
+            <a href="#" class="social-link" aria-label="Twitter">
+              <span class="social-icon">🐦</span>
+            </a>
+            <a href="#" class="social-link" aria-label="Email">
+              <span class="social-icon">✉️</span>
+            </a>
+          </div>
+        </div>
+
+        <div class="footer-section">
+          <h3 class="footer-title">快速链接</h3>
+          <ul class="footer-links">
+            <li><a href="index.html">仪表盘</a></li>
+            <li><a href="pomodoro.html">番茄钟</a></li>
+            <li><a href="stopwatch.html">秒表</a></li>
+            <li><a href="countdown.html">多组倒计时</a></li>
+            <li><a href="worldclock.html">世界时钟</a></li>
+            <li><a href="deadline.html">截止倒计时</a></li>
+            <li><a href="breathing.html">呼吸训练</a></li>
+          </ul>
+        </div>
+
+        <div class="footer-section">
+          <h3 class="footer-title">关于</h3>
+          <ul class="footer-links">
+            <li><a href="#">项目介绍</a></li>
+            <li><a href="#">更新日志</a></li>
+            <li><a href="#">贡献指南</a></li>
+            <li><a href="#">隐私政策</a></li>
+            <li><a href="#">使用条款</a></li>
+          </ul>
+        </div>
+
+        <div class="footer-section">
+          <h3 class="footer-title">反馈与支持</h3>
+          <p class="footer-description">
+            如果您遇到任何问题或有改进建议，欢迎联系我们。
+          </p>
+          <a href="mailto:support@timehub.example.com" class="btn btn-outline">发送反馈</a>
+        </div>
+      </div>
+
+      <div class="footer-bottom">
+        <p>&copy; <span id="current-year">2024</span> TimeHub. 保留所有权利。</p>
+        <p class="footer-version">版本 <span id="app-version">1.0.0</span></p>
+      </div>
+    </div>
+  </footer>
+
+  <!-- JavaScript 文件 -->
+  <script src="js/common.js"></script>
+  <script src="js/toast.js"></script>
+  <script src="js/utils.js"></script>
+  <script src="js/dashboard.js"></script>
+
+  <!-- 内联脚本 -->
+  <script>
+    // 设置当前年份和应用版本
+    document.getElementById('current-year').textContent = new Date().getFullYear();
+    document.getElementById('app-version').textContent = TimeHub?.CONSTANTS?.VERSION || '1.0.0';
+
+    // ===== 实时时钟功能 =====
+    function updateClock() {
+      const now = new Date();
+      const hours = now.getHours().toString().padStart(2, '0');
+      const minutes = now.getMinutes().toString().padStart(2, '0');
+      const seconds = now.getSeconds().toString().padStart(2, '0');
+
+      document.getElementById('digital-clock').textContent = `${hours}:${minutes}:${seconds}`;
+
+      // 更新日期（中文格式）
+      const year = now.getFullYear();
+      const month = (now.getMonth() + 1).toString().padStart(2, '0');
+      const day = now.getDate().toString().padStart(2, '0');
+      const weekdays = ['星期日', '星期一', '星期二', '星期三', '星期四', '星期五', '星期六'];
+      const weekday = weekdays[now.getDay()];
+
+      document.getElementById('today-date').textContent = `${year}年${month}月${day}日 ${weekday}`;
+
+      // 更新问候语
+      const hour = now.getHours();
+      let greeting = '晚上好';
+      if (hour >= 5 && hour < 12) {
+        greeting = '早上好';
+      } else if (hour >= 12 && hour < 18) {
+        greeting = '下午好';
+      }
+      document.getElementById('greeting').textContent = greeting;
+    }
+
+    // ===== 今日番茄数功能 =====
+    function updateTomatoCount() {
+      // 从localStorage读取今日番茄数
+      // 假设数据存储在'timehub_pomodoro_stats'键中
+      const today = new Date().toISOString().split('T')[0]; // YYYY-MM-DD
+      const stats = TimeHubUtils.getLocalStorage('timehub_pomodoro_stats', {});
+      const todayCount = stats[today] || 0;
+
+      document.getElementById('today-tomatoes').textContent = todayCount;
+    }
+
+    // ===== 初始化 =====
+    // 立即更新一次
+    updateClock();
+    updateTomatoCount();
+
+    // 每秒更新时钟
+    setInterval(updateClock, 1000);
+
+    // 每30秒更新一次番茄数（防止其他页面更新数据）
+    setInterval(updateTomatoCount, 30000);
+
+    // ===== 移动端菜单切换 =====
+    document.querySelector('.mobile-menu-btn')?.addEventListener('click', function() {
+      const menu = document.querySelector('.mobile-menu');
+      menu.classList.toggle('mobile-hidden');
+    });
+
+    // 点击菜单项后关闭移动菜单
+    document.querySelectorAll('.mobile-nav-link').forEach(link => {
+      link.addEventListener('click', () => {
+        document.querySelector('.mobile-menu').classList.add('mobile-hidden');
+      });
+    });
+
+    // 点击遮罩层关闭菜单
+    document.querySelector('.mobile-menu')?.addEventListener('click', function(e) {
+      if (e.target === this) {
+        this.classList.add('mobile-hidden');
+      }
+    });
+  </script>
+
+  <!-- 移动端底部导航 -->
+  <div class="mobile-bottom-nav">
+    <a href="index.html" class="bottom-nav-item active">
+      <span class="bottom-nav-icon">🏠</span>
+      <span class="bottom-nav-label">首页</span>
+    </a>
+    <a href="pomodoro.html" class="bottom-nav-item">
+      <span class="bottom-nav-icon">🍅</span>
+      <span class="bottom-nav-label">番茄</span>
+    </a>
+    <a href="stopwatch.html" class="bottom-nav-item">
+      <span class="bottom-nav-icon">⏱️</span>
+      <span class="bottom-nav-label">秒表</span>
+    </a>
+    <a href="worldclock.html" class="bottom-nav-item">
+      <span class="bottom-nav-icon">🌐</span>
+      <span class="bottom-nav-label">世界</span>
+    </a>
+    <a href="breathing.html" class="bottom-nav-item">
+      <span class="bottom-nav-icon">🧘</span>
+      <span class="bottom-nav-label">呼吸</span>
+    </a>
+  </div>
+
+  <!-- Service Worker 注册 -->
+  <script>
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', function() {
+        navigator.serviceWorker.register('sw.js').then(function(registration) {
+          console.log('Service Worker 注册成功：', registration.scope);
+        }).catch(function(error) {
+          console.log('Service Worker 注册失败：', error);
+        });
+      });
+    }
+  </script>
+</body>
+</html>
