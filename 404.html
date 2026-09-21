@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>页面不存在 - TimeHub</title>
+  <meta name="robots" content="noindex">
+
+  <!-- 主题预设：与其它页面一致，避免刷新时闪白/闪黑 -->
+  <script>
+    (function () {
+      try {
+        var d = JSON.parse(localStorage.getItem('timehub_data') || '{}');
+        var t = (d.settings && d.settings.theme) || d.theme || 'auto';
+        var dark = t === 'auto' ? matchMedia('(prefers-color-scheme: dark)').matches : t === 'dark';
+        document.documentElement.setAttribute('data-theme', dark ? 'dark' : 'light');
+      } catch (e) { /* 读不到就用浅色默认值 */ }
+    })();
+  </script>
+
+  <link rel="stylesheet" href="css/base.css">
+  <link rel="stylesheet" href="css/layout.css">
+  <link rel="stylesheet" href="css/components.css">
+
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#4361ee">
+  <link rel="icon" href="assets/icons/dashboard.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="assets/icons/apple-touch-icon.png">
+
+  <style>
+    .notfound-main {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: var(--spacing-xxl) var(--spacing-md);
+    }
+
+    .notfound-card {
+      max-width: 520px;
+      width: 100%;
+      text-align: center;
+      background: var(--surface-color);
+      border: 1px solid var(--border-color);
+      border-radius: var(--border-radius-lg);
+      padding: var(--spacing-xxl) var(--spacing-xl);
+    }
+
+    .notfound-code {
+      font-family: var(--font-family-mono);
+      font-size: 4rem;
+      font-weight: 500;
+      line-height: 1;
+      color: var(--primary-color);
+    }
+
+    .notfound-title {
+      font-size: 1.5rem;
+      margin: var(--spacing-md) 0 var(--spacing-sm);
+      color: var(--text-color);
+    }
+
+    .notfound-desc {
+      color: var(--text-secondary);
+      margin-bottom: var(--spacing-xl);
+    }
+
+    .notfound-links {
+      display: flex;
+      flex-wrap: wrap;
+      gap: var(--spacing-sm);
+      justify-content: center;
+    }
+  </style>
+</head>
+<body>
+  <header class="navbar">
+    <div class="container">
+      <a href="index.html" class="logo">
+        <span class="logo-icon">⏱️</span>
+        TimeHub
+      </a>
+      <nav class="nav-links">
+        <a href="index.html" class="nav-link">仪表盘</a>
+        <a href="pomodoro.html" class="nav-link">番茄钟</a>
+        <a href="stopwatch.html" class="nav-link">秒表</a>
+        <a href="countdown.html" class="nav-link">多组倒计时</a>
+        <a href="worldclock.html" class="nav-link">世界时钟</a>
+        <a href="deadline.html" class="nav-link">截止倒计时</a>
+        <a href="breathing.html" class="nav-link">呼吸训练</a>
+      </nav>
+      <button class="theme-toggle" aria-label="切换主题">
+        <span class="theme-icon">🌙</span>
+      </button>
+    </div>
+  </header>
+
+  <main class="notfound-main">
+    <div class="notfound-card">
+      <div class="notfound-code">404</div>
+      <h1 class="notfound-title">页面不存在</h1>
+      <p class="notfound-desc">
+        你要找的页面可能已经改名或迁移了。试试下面这些工具入口：
+      </p>
+      <div class="notfound-links">
+        <a href="index.html" class="btn btn-primary">回到仪表盘</a>
+        <a href="pomodoro.html" class="btn btn-outline">番茄钟</a>
+        <a href="stopwatch.html" class="btn btn-outline">秒表</a>
+      </div>
+    </div>
+  </main>
+
+  <footer class="footer">
+    <div class="container">
+      <div class="footer-bottom">
+        <p>&copy; <span data-timehub-year>2026</span> TimeHub. 保留所有权利。</p>
+        <p class="footer-version">版本 <span data-timehub-version>1.1.0</span></p>
+      </div>
+    </div>
+  </footer>
+
+  <script src="js/common.js"></script>
+</body>
+</html>

@@ -279,37 +279,25 @@
   box-shadow: var(--shadow-lg);
 }
 
-/* ===== 深色模式适配 ===== */
-@media (prefers-color-scheme: dark) {
-  .btn-secondary:hover {
-    background-color: rgba(255, 255, 255, 0.1);
-  }
-
-  .input::placeholder {
-    color: var(--text-secondary);
-  }
-
-  .card {
-    border: 1px solid var(--border-color);
-  }
-
-  .tooltip {
-    background-color: var(--surface-color);
-    border: 1px solid var(--border-color);
-  }
-}
-
-/* 主题类适配 */
-.theme-dark .btn-secondary:hover,
-.theme-dark .btn-outline:hover {
+/* ===== 深色主题适配 =====
+   统一用 [data-theme="dark"]：由 js/common.js 解析用户选择后写到 html 属性上。
+   不要用 @media (prefers-color-scheme: dark)——那只认系统设置，站内切换按钮会失效。 */
+[data-theme="dark"] .btn-secondary:hover,
+[data-theme="dark"] .btn-outline:hover {
   background-color: rgba(255, 255, 255, 0.1);
 }
 
-.theme-dark .card {
+[data-theme="dark"] .input::placeholder {
+  color: var(--text-secondary);
+}
+
+[data-theme="dark"] .card,
+[data-theme="dark"] .modal {
+  background-color: var(--surface-color);
   border: 1px solid var(--border-color);
 }
 
-.theme-dark .modal {
+[data-theme="dark"] .tooltip {
   background-color: var(--surface-color);
   border: 1px solid var(--border-color);
 }

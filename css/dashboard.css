@@ -1,8 +1,8 @@
 /* TimeHub - 首页仪表盘样式 */
-/* 版本: 1.0 */
+/* 版本: 1.1 */
 
-/* ===== 导入字体 ===== */
-@import url('https://fonts.googleapis.com/css2?family=DM+Mono:wght@300;400;500&display=swap');
+/* 说明：本项目不加载任何外部字体（Google Fonts 在国内不可达，也会破坏 PWA 离线承诺），
+   数字等宽显示统一使用 css/base.css 里的 --font-family-mono 系统字体栈。 */
 
 /* ===== 通用布局 ===== */
 .main-content {
@@ -51,7 +51,7 @@
 }
 
 .digital-clock {
-  font-family: 'DM Mono', monospace;
+  font-family: var(--font-family-mono);
   font-size: 4.5rem;
   font-weight: 500;
   color: var(--primary-color);
@@ -194,7 +194,7 @@
 
 .tomato-number {
   display: block;
-  font-family: 'DM Mono', monospace;
+  font-family: var(--font-family-mono);
   font-size: 3.5rem;
   font-weight: 700;
   color: var(--primary-color);
@@ -332,17 +332,17 @@
 }
 
 /* ===== 暗色主题优化 ===== */
-@media (prefers-color-scheme: dark) {
-  .tomato-preview {
-    background: linear-gradient(135deg, rgba(67, 97, 238, 0.1) 0%, rgba(114, 9, 183, 0.1) 100%);
-  }
+/* ===== 深色主题适配 =====
+   统一用 [data-theme="dark"]（见 css/base.css 顶部说明），不再用系统媒体查询。 */
+[data-theme="dark"] .tomato-preview {
+  background: linear-gradient(135deg, rgba(67, 97, 238, 0.1) 0%, rgba(114, 9, 183, 0.1) 100%);
+}
 
-  .tool-card {
-    background-color: var(--surface-color);
-    border-color: var(--border-color);
-  }
+[data-theme="dark"] .tool-card {
+  background-color: var(--surface-color);
+  border-color: var(--border-color);
+}
 
-  .tool-card:hover {
-    border-color: var(--primary-color);
-  }
+[data-theme="dark"] .tool-card:hover {
+  border-color: var(--primary-color);
 }

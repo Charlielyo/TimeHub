@@ -5,20 +5,39 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>世界时钟 - TimeHub</title>
   <meta name="description" content="TimeHub世界时钟工具，查看全球主要城市实时时间、时差和时区转换。">
+  <!-- 分享卡片：社交平台抓到的标题与摘要
+       og:url / og:image 需要站点正式域名，确定域名后一并补上（现在还缺域名，宁可不写也不写错） -->
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="TimeHub">
+  <meta property="og:title" content="世界时钟 - TimeHub">
+  <meta property="og:description" content="TimeHub世界时钟工具，查看全球主要城市实时时间、时差和时区转换。">
+  <meta name="twitter:card" content="summary">
+  <!-- 主题预设：在首次绘制前写入 data-theme，避免刷新时闪白/闪黑。
+       取值逻辑与 js/common.js 保持一致（用户选择 → auto 时跟随系统）。 -->
+  <script>
+    (function () {
+      try {
+        var d = JSON.parse(localStorage.getItem('timehub_data') || '{}');
+        var t = (d.settings && d.settings.theme) || d.theme || 'auto';
+        var dark = t === 'auto' ? matchMedia('(prefers-color-scheme: dark)').matches : t === 'dark';
+        document.documentElement.setAttribute('data-theme', dark ? 'dark' : 'light');
+      } catch (e) { /* 读不到就用 css/base.css 的浅色默认值 */ }
+    })();
+  </script>
+
   <link rel="stylesheet" href="css/base.css">
   <link rel="stylesheet" href="css/layout.css">
   <link rel="stylesheet" href="css/components.css">
-  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&display=swap">
   <link rel="icon" href="assets/icons/world-clock.svg" type="image/svg+xml">
 
   <!-- iOS 支持 -->
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-  <link rel="apple-touch-icon" href="assets/icons/world-clock.svg">
+  <link rel="apple-touch-icon" href="assets/icons/apple-touch-icon.png">
 
   <!-- PWA 相关 -->
-  <meta name="theme-color" content="#C0392B">
-  <link rel="manifest" href="manifest.json" crossorigin="use-credentials">
+  <meta name="theme-color" content="#4361ee">
+  <link rel="manifest" href="manifest.json">
   <style>
     .worldclock-page { }
 
@@ -45,7 +64,7 @@
     }
 
     .local-time {
-      font-family: 'DM Mono', monospace;
+      font-family: var(--font-family-mono);
       font-size: 3.5rem;
       font-weight: 500;
       color: var(--text-color);
@@ -68,6 +87,7 @@
 
     .search-input {
       flex: 1;
+      width: 100%;              /* 不写就会退回浏览器默认的 ~170px，placeholder 被截断 */
       padding: var(--spacing-sm) var(--spacing-md);
       border: 1px solid var(--border-color);
       border-radius: var(--border-radius-md);
@@ -173,7 +193,7 @@
     }
 
     .city-time {
-      font-family: 'DM Mono', monospace;
+      font-family: var(--font-family-mono);
       font-size: 1.75rem;
       font-weight: 500;
       color: var(--text-color);
@@ -243,7 +263,7 @@
     }
 
     .converter-item-time {
-      font-family: 'DM Mono', monospace;
+      font-family: var(--font-family-mono);
       font-size: 1rem;
       font-weight: 500;
       color: var(--text-color);
@@ -325,12 +345,45 @@
     </div>
   </main>
 
+  <!-- 页脚（全站统一，7 个页面共用同一份标记；年份与版本号由 js/common.js 注入） -->
   <footer class="footer">
     <div class="container">
-      <div class="footer-content"><p>TimeHub - 简单而强大的时间管理工具</p></div>
+      <div class="footer-content">
+        <div class="footer-section">
+          <h3 class="footer-title">TimeHub</h3>
+          <p class="footer-description">
+            一个简单而强大的时间管理工具集合，帮助您更高效地利用每一分钟。
+            纯前端实现，数据只存在你的浏览器里。
+          </p>
+          <!-- 想加仓库/社交链接就放这里，例如：
+               <div class="footer-social"><a class="social-link" href="https://github.com/…">…</a></div> -->
+        </div>
+
+        <div class="footer-section">
+          <h3 class="footer-title">快速链接</h3>
+          <ul class="footer-links">
+            <li><a href="index.html">仪表盘</a></li>
+            <li><a href="pomodoro.html">番茄钟</a></li>
+            <li><a href="stopwatch.html">秒表</a></li>
+            <li><a href="countdown.html">多组倒计时</a></li>
+            <li><a href="worldclock.html">世界时钟</a></li>
+            <li><a href="deadline.html">截止倒计时</a></li>
+            <li><a href="breathing.html">呼吸训练</a></li>
+          </ul>
+        </div>
+
+        <div class="footer-section">
+          <h3 class="footer-title">反馈与支持</h3>
+          <p class="footer-description">
+            如果您遇到任何问题或有改进建议，欢迎联系我们。
+          </p>
+          <a href="mailto:support@timehub.example.com" class="btn btn-outline">发送反馈</a>
+        </div>
+      </div>
+
       <div class="footer-bottom">
-        <p>&copy; <span id="year"></span> TimeHub</p>
-        <p class="footer-version">版本 1.0.0</p>
+        <p>&copy; <span data-timehub-year>2026</span> TimeHub. 保留所有权利。</p>
+        <p class="footer-version">版本 <span data-timehub-version>1.1.0</span></p>
       </div>
     </div>
   </footer>
@@ -591,7 +644,6 @@
         if (e.target === this) this.classList.remove('show');
       });
 
-      document.getElementById('year').textContent = new Date().getFullYear();
     })();
   </script>
 

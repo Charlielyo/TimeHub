@@ -78,10 +78,9 @@
   background-color: rgba(0, 0, 0, 0.05);
 }
 
-@media (prefers-color-scheme: dark) {
-  .theme-toggle:hover {
-    background-color: rgba(255, 255, 255, 0.1);
-  }
+/* 深色主题下按钮 hover 用白色薄层（见 css/base.css 顶部主题说明） */
+[data-theme="dark"] .theme-toggle:hover {
+  background-color: rgba(255, 255, 255, 0.1);
 }
 
 .theme-icon {
@@ -130,8 +129,9 @@
 
 /* ===== 页脚内容布局 ===== */
 .footer-content {
+  /* auto-fit：页脚有几栏就排几栏，不会像固定 4 栏那样在缺栏时留一块空白 */
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
   gap: var(--spacing-xl);
   margin-bottom: var(--spacing-xl);
   text-align: left;

@@ -5,8 +5,28 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>TimeHub - 您的时间管理工具集</title>
   <meta name="description" content="TimeHub是一个集成了番茄钟、秒表、多组倒计时、世界时钟、截止倒计时和呼吸训练的时间管理工具网站。">
+  <!-- 分享卡片：社交平台抓到的标题与摘要
+       og:url / og:image 需要站点正式域名，确定域名后一并补上（现在还缺域名，宁可不写也不写错） -->
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="TimeHub">
+  <meta property="og:title" content="TimeHub - 您的时间管理工具集">
+  <meta property="og:description" content="TimeHub是一个集成了番茄钟、秒表、多组倒计时、世界时钟、截止倒计时和呼吸训练的时间管理工具网站。">
+  <meta name="twitter:card" content="summary">
   <meta name="keywords" content="时间管理,番茄钟,秒表,倒计时,世界时钟,呼吸训练,工具集">
   <meta name="author" content="TimeHub Team">
+
+  <!-- 主题预设：在首次绘制前写入 data-theme，避免刷新时闪白/闪黑。
+       取值逻辑与 js/common.js 保持一致（用户选择 → auto 时跟随系统）。 -->
+  <script>
+    (function () {
+      try {
+        var d = JSON.parse(localStorage.getItem('timehub_data') || '{}');
+        var t = (d.settings && d.settings.theme) || d.theme || 'auto';
+        var dark = t === 'auto' ? matchMedia('(prefers-color-scheme: dark)').matches : t === 'dark';
+        document.documentElement.setAttribute('data-theme', dark ? 'dark' : 'light');
+      } catch (e) { /* 读不到就用 css/base.css 的浅色默认值 */ }
+    })();
+  </script>
 
   <!-- 样式表 -->
   <link rel="stylesheet" href="css/base.css">
@@ -18,13 +38,13 @@
   <link rel="icon" href="assets/icons/dashboard.svg" type="image/svg+xml">
 
   <!-- PWA 相关（可选） -->
-  <meta name="theme-color" content="#C0392B">
-  <link rel="manifest" href="manifest.json" crossorigin="use-credentials">
+  <meta name="theme-color" content="#4361ee">
+  <link rel="manifest" href="manifest.json">
 
   <!-- iOS 支持 -->
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-  <link rel="apple-touch-icon" href="assets/icons/dashboard.svg">
+  <link rel="apple-touch-icon" href="assets/icons/apple-touch-icon.png">
 </head>
 <body>
   <!-- 导航栏 -->
@@ -172,7 +192,7 @@
     </div>
   </main>
 
-  <!-- 页脚 -->
+  <!-- 页脚（全站统一，7 个页面共用同一份标记；年份与版本号由 js/common.js 注入） -->
   <footer class="footer">
     <div class="container">
       <div class="footer-content">
@@ -180,18 +200,10 @@
           <h3 class="footer-title">TimeHub</h3>
           <p class="footer-description">
             一个简单而强大的时间管理工具集合，帮助您更高效地利用每一分钟。
+            纯前端实现，数据只存在你的浏览器里。
           </p>
-          <div class="footer-social">
-            <a href="#" class="social-link" aria-label="GitHub">
-              <span class="social-icon">🐙</span>
-            </a>
-            <a href="#" class="social-link" aria-label="Twitter">
-              <span class="social-icon">🐦</span>
-            </a>
-            <a href="#" class="social-link" aria-label="Email">
-              <span class="social-icon">✉️</span>
-            </a>
-          </div>
+          <!-- 想加仓库/社交链接就放这里，例如：
+               <div class="footer-social"><a class="social-link" href="https://github.com/…">…</a></div> -->
         </div>
 
         <div class="footer-section">
@@ -208,17 +220,6 @@
         </div>
 
         <div class="footer-section">
-          <h3 class="footer-title">关于</h3>
-          <ul class="footer-links">
-            <li><a href="#">项目介绍</a></li>
-            <li><a href="#">更新日志</a></li>
-            <li><a href="#">贡献指南</a></li>
-            <li><a href="#">隐私政策</a></li>
-            <li><a href="#">使用条款</a></li>
-          </ul>
-        </div>
-
-        <div class="footer-section">
           <h3 class="footer-title">反馈与支持</h3>
           <p class="footer-description">
             如果您遇到任何问题或有改进建议，欢迎联系我们。
@@ -228,8 +229,8 @@
       </div>
 
       <div class="footer-bottom">
-        <p>&copy; <span id="current-year">2024</span> TimeHub. 保留所有权利。</p>
-        <p class="footer-version">版本 <span id="app-version">1.0.0</span></p>
+        <p>&copy; <span data-timehub-year>2026</span> TimeHub. 保留所有权利。</p>
+        <p class="footer-version">版本 <span data-timehub-version>1.1.0</span></p>
       </div>
     </div>
   </footer>
@@ -242,9 +243,7 @@
 
   <!-- 内联脚本 -->
   <script>
-    // 设置当前年份和应用版本
-    document.getElementById('current-year').textContent = new Date().getFullYear();
-    document.getElementById('app-version').textContent = TimeHub?.CONSTANTS?.VERSION || '1.0.0';
+    // 年份与版本号由 js/common.js 统一写入（footer 里的 data-timehub-year / data-timehub-version）
 
     // ===== 实时时钟功能 =====
     function updateClock() {
@@ -342,17 +341,5 @@
     </a>
   </div>
 
-  <!-- Service Worker 注册 -->
-  <script>
-    if ('serviceWorker' in navigator) {
-      window.addEventListener('load', function() {
-        navigator.serviceWorker.register('sw.js').then(function(registration) {
-          console.log('Service Worker 注册成功：', registration.scope);
-        }).catch(function(error) {
-          console.log('Service Worker 注册失败：', error);
-        });
-      });
-    }
-  </script>
 </body>
 </html>

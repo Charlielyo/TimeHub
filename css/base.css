@@ -1,7 +1,16 @@
-/* TimeHub - 基础样式 (CSS变量、重置、深色模式) */
-/* 版本: 1.0 */
+/* TimeHub - 基础样式 (CSS变量、重置、深浅主题) */
+/* 版本: 1.1 */
 
-/* ===== CSS 自定义属性 (变量) ===== */
+/* ===== 主题机制说明 =====
+   全站只有一个主题开关：<html data-theme="light|dark">。
+
+   - js/common.js 负责解析用户选择（auto 会跟随系统），把**最终生效**的主题写进 data-theme；
+   - 每个页面的 <head> 里有一段极小的内联脚本，在首次绘制前先写一次，避免刷新时闪白/闪黑；
+   - 组件样式一律用 [data-theme="dark"] 前缀，**不要**再写 @media (prefers-color-scheme: dark)——
+     那种写法只认系统设置、不认站内切换按钮，是旧版"主题切换没反应"的根因。
+
+   下面 :root 是浅色默认值：即使 JS 失效，页面也不至于没样式。 */
+
 :root {
   /* 主色系 - 蓝色主题 */
   --primary-color: #4361ee;
@@ -58,6 +67,11 @@
   --max-width: 1200px;
   --header-height: 64px;
   --footer-height: 80px;
+
+  /* 告诉浏览器本页支持深浅两种配色：
+     原生控件（输入框、下拉、日期选择器、滚动条）会跟着一起变，
+     否则深色主题下会出现"白底白字"的系统控件。 */
+  color-scheme: light;
 }
 
 /* ===== CSS 重置 ===== */
@@ -123,35 +137,17 @@ ol {
   list-style-position: inside;
 }
 
-/* ===== 深色模式 ===== */
-@media (prefers-color-scheme: dark) {
-  :root {
-    --bg-color: #121212;
-    --surface-color: #1e1e1e;
-    --text-color: #f8f9fa;
-    --text-secondary: #adb5bd;
-    --border-color: #495057;
-    --shadow-color: rgba(0, 0, 0, 0.3);
-  }
-}
-
-/* ===== 强制主题类 ===== */
-.theme-dark {
+/* ===== 深色主题 =====
+   唯一入口：<html data-theme="dark">（由 JS 写入，见文件开头说明）。
+   这里定义的是全站共享的颜色变量；各组件只要用 var(--*) 就自动跟随主题。 */
+[data-theme="dark"] {
   --bg-color: #121212;
   --surface-color: #1e1e1e;
   --text-color: #f8f9fa;
   --text-secondary: #adb5bd;
   --border-color: #495057;
   --shadow-color: rgba(0, 0, 0, 0.3);
-}
-
-.theme-light {
-  --bg-color: #f8f9fa;
-  --surface-color: #ffffff;
-  --text-color: #212529;
-  --text-secondary: #6c757d;
-  --border-color: #dee2e6;
-  --shadow-color: rgba(0, 0, 0, 0.1);
+  color-scheme: dark;
 }
 
 /* ===== 打印样式 ===== */

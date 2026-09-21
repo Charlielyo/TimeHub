@@ -1,21 +1,59 @@
 {
-  "name": "TimeHub",
+  "name": "TimeHub - 时间管理工具集",
   "short_name": "TimeHub",
-  "description": "一站式时间管理工具集合",
-  "start_url": "index.html",
+  "description": "一站式时间管理工具集合：番茄钟、秒表、多组倒计时、世界时钟、截止倒计时、呼吸训练。纯前端实现，数据只存在本地浏览器。",
+  "lang": "zh-CN",
+  "dir": "ltr",
+  "start_url": "./",
+  "scope": "./",
   "display": "standalone",
+  "display_override": ["standalone", "minimal-ui"],
   "background_color": "#f8f9fa",
-  "theme_color": "#C0392B",
+  "theme_color": "#4361ee",
+  "categories": ["productivity", "utilities"],
   "icons": [
     {
-      "src": "assets/icons/dashboard.svg",
+      "src": "assets/icons/icon-192.png",
       "sizes": "192x192",
-      "type": "image/svg+xml"
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "assets/icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "assets/icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
     },
     {
       "src": "assets/icons/dashboard.svg",
-      "sizes": "512x512",
+      "sizes": "any",
       "type": "image/svg+xml"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "番茄钟",
+      "short_name": "番茄钟",
+      "url": "pomodoro.html",
+      "icons": [{ "src": "assets/icons/icon-192.png", "sizes": "192x192" }]
+    },
+    {
+      "name": "秒表",
+      "short_name": "秒表",
+      "url": "stopwatch.html",
+      "icons": [{ "src": "assets/icons/icon-192.png", "sizes": "192x192" }]
+    },
+    {
+      "name": "世界时钟",
+      "short_name": "世界时钟",
+      "url": "worldclock.html",
+      "icons": [{ "src": "assets/icons/icon-192.png", "sizes": "192x192" }]
     }
   ]
 }

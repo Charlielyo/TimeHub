@@ -121,12 +121,10 @@
         border-left-color: ${toastColors.error};
       }
 
-      /* 深色模式适配 */
-      @media (prefers-color-scheme: dark) {
-        .toast {
-          background: var(--surface-color);
-          border: 1px solid var(--border-color);
-        }
+      /* 深色主题适配（用 html[data-theme]，不要用系统媒体查询——站内切换按钮会失效） */
+      [data-theme="dark"] .toast {
+        background: var(--surface-color);
+        border: 1px solid var(--border-color);
       }
 
       /* 移动端适配 */

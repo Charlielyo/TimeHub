@@ -10,7 +10,7 @@
   /* ===== 常量定义 ===== */
   TimeHub.CONSTANTS = {
     SITE_NAME: 'TimeHub',
-    VERSION: '1.0.0',
+    VERSION: '1.1.0',
     STORAGE_KEY: 'timehub_data',
     PAGES: {
       DASHBOARD: 'index.html',
@@ -463,12 +463,27 @@
   /* ===== 主题管理 ===== */
 
   /**
-   * 获取当前主题设置
+   * 获取当前主题设置（用户的选择，可能是 'auto'）
    * @returns {string} 'auto', 'light', 'dark'
    */
   TimeHub.getTheme = function() {
-    const settings = TimeHub.getStorage().settings || {};
-    return settings.theme || 'auto';
+    const storage = TimeHub.getStorage();
+    const settings = storage.settings || {};
+    // 兼容历史数据：早期版本把 theme 同时写在顶层和 settings 里，两处都认
+    return settings.theme || storage.theme || 'auto';
+  };
+
+  /**
+   * 把「用户选择」解析成「最终生效」的主题
+   * auto 跟随系统，其余原样返回
+   * @param {string} theme - 'auto', 'light', 'dark'
+   * @returns {string} 'light' | 'dark'
+   */
+  TimeHub.resolveTheme = function(theme) {
+    if (theme === 'auto') {
+      return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+    }
+    return theme === 'dark' ? 'dark' : 'light';
   };
 
   /**
@@ -481,10 +496,11 @@
       return;
     }
 
-    // 保存到设置
-    const settings = TimeHub.getStorage().settings || {};
+    const storage = TimeHub.getStorage();
+    const settings = storage.settings || {};
     settings.theme = theme;
-    TimeHub.updateStorage({ settings });
+    // 顶层 theme 是早期版本的字段，一并写入，避免两处取值不一致
+    TimeHub.saveStorage({ ...storage, theme, settings });
 
     // 应用主题
     TimeHub.applyTheme(theme);
@@ -493,26 +509,26 @@
     window.dispatchEvent(new CustomEvent('timehub-settings-changed', {
       detail: { theme }
     }));
-
-    console.log(`主题已设置为: ${theme}`);
   };
 
   /**
    * 应用主题到页面
+   * 唯一的主题开关：把**最终生效**的主题写到 <html data-theme="light|dark">。
+   * 所有 CSS 都基于这个属性变色（见 css/base.css 顶部说明），
+   * 因此不存在"有些地方跟系统、有些地方跟按钮"的分裂。
    * @param {string} theme - 'auto', 'light', 'dark'
+   * @returns {string} 实际生效的主题
    */
   TimeHub.applyTheme = function(theme) {
+    const effective = TimeHub.resolveTheme(theme);
     const html = document.documentElement;
 
-    // 移除现有主题类
-    html.classList.remove('theme-light', 'theme-dark');
+    html.setAttribute('data-theme', effective);
+    // 同时保留主题类名，方便第三方样式/用户自定义 CSS 挂钩
+    html.classList.toggle('theme-dark', effective === 'dark');
+    html.classList.toggle('theme-light', effective === 'light');
 
-    if (theme === 'light') {
-      html.classList.add('theme-light');
-    } else if (theme === 'dark') {
-      html.classList.add('theme-dark');
-    }
-    // 'auto' 不添加类，依赖系统设置
+    return effective;
   };
 
   /**
@@ -544,55 +560,38 @@
    * 初始化主题系统
    */
   TimeHub.initTheme = function() {
-    // 加载保存的主题
+    // 加载保存的主题并立即应用
     const theme = TimeHub.getTheme();
     TimeHub.applyTheme(theme);
 
-    // 查找主题切换按钮并添加事件
-    console.log('初始化主题系统，当前主题:', theme);
+    // 主题切换按钮
     const themeToggle = document.querySelector('.theme-toggle');
-    console.log('主题切换按钮:', themeToggle ? '找到' : '未找到');
     if (themeToggle) {
-      // 设置初始图标
       TimeHub.updateThemeIcon(themeToggle, theme);
-      console.log('主题按钮图标已更新');
 
-      // 添加点击事件
       themeToggle.addEventListener('click', () => {
-        try {
-          console.log('主题切换按钮被点击');
-          const newTheme = TimeHub.cycleTheme();
-          console.log('切换到新主题:', newTheme);
-          TimeHub.updateThemeIcon(themeToggle, newTheme);
+        const newTheme = TimeHub.cycleTheme();
+        TimeHub.updateThemeIcon(themeToggle, newTheme);
 
-          // 显示反馈
-          const messages = {
-            auto: '跟随系统主题',
-            light: '浅色主题',
-            dark: '深色主题'
-          };
-          if (window.toast) {
-            window.toast(`已切换为${messages[newTheme]}`, 'info', 2000);
-          } else {
-            console.log('Toast未定义，主题已切换为:', newTheme);
-          }
-        } catch (error) {
-          console.error('主题切换失败:', error);
-          alert('主题切换失败: ' + error.message);
+        const messages = {
+          auto: '跟随系统主题',
+          light: '浅色主题',
+          dark: '深色主题'
+        };
+        if (window.toast) {
+          window.toast(`已切换为${messages[newTheme]}`, 'info', 2000);
         }
       });
-      console.log('主题切换事件监听器已添加');
     } else {
-      console.warn('未找到主题切换按钮，请检查HTML结构');
+      console.warn('未找到主题切换按钮（.theme-toggle），请检查页面结构');
     }
 
-    // 监听系统主题变化（仅当主题为auto时）
-    const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
-    mediaQuery.addEventListener('change', (e) => {
-      if (TimeHub.getTheme() === 'auto') {
-        // 重新应用auto主题以响应系统变化
-        TimeHub.applyTheme('auto');
-        console.log(`系统主题变化: ${e.matches ? 'dark' : 'light'}`);
+    // 系统主题变化：仅在用户选择「跟随系统」时生效
+    window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', () => {
+      if (TimeHub.getTheme() !== 'auto') return;
+      TimeHub.applyTheme('auto');
+      if (themeToggle) {
+        TimeHub.updateThemeIcon(themeToggle, 'auto');
       }
     });
   };
@@ -634,13 +633,10 @@
     const currentPage = window.location.pathname.split('/').pop();
     TimeHub.setActiveNav(currentPage);
 
-    // 注册Service Worker (PWA支持)
+    // 注册Service Worker (PWA支持)——只在成功时安静通过，失败才提示
     if ('serviceWorker' in navigator) {
       window.addEventListener('load', () => {
         navigator.serviceWorker.register('./sw.js')
-          .then(registration => {
-            console.log('[Service Worker] 注册成功，作用域:', registration.scope);
-          })
           .catch(error => {
             console.error('[Service Worker] 注册失败:', error);
           });
@@ -649,6 +645,14 @@
 
     // 初始化主题系统
     TimeHub.initTheme();
+
+    // 页脚年份与版本号：页面里只写 data 属性，值统一从这里注入，避免各页硬编码版本对不上
+    document.querySelectorAll('[data-timehub-year]').forEach(el => {
+      el.textContent = new Date().getFullYear();
+    });
+    document.querySelectorAll('[data-timehub-version]').forEach(el => {
+      el.textContent = TimeHub.CONSTANTS.VERSION;
+    });
 
     // 添加CSS动画定义（如果不存在）
     if (!document.querySelector('#timehub-animations')) {
@@ -662,13 +666,6 @@
       `;
       document.head.appendChild(style);
     }
-
-    // 监听设置变更
-    window.addEventListener('timehub-settings-changed', (e) => {
-      console.log('设置已变更:', e.detail);
-    });
-
-    console.log(`${TimeHub.CONSTANTS.SITE_NAME} v${TimeHub.CONSTANTS.VERSION} 已初始化`);
   };
 
   // 页面加载完成后自动初始化

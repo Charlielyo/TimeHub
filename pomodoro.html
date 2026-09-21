@@ -5,14 +5,33 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>番茄钟 - TimeHub</title>
   <meta name="description" content="TimeHub番茄钟工具，使用番茄工作法提高生产力：25分钟专注，5分钟短休息，15分钟长休息。">
+  <!-- 分享卡片：社交平台抓到的标题与摘要
+       og:url / og:image 需要站点正式域名，确定域名后一并补上（现在还缺域名，宁可不写也不写错） -->
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="TimeHub">
+  <meta property="og:title" content="番茄钟 - TimeHub">
+  <meta property="og:description" content="TimeHub番茄钟工具，使用番茄工作法提高生产力：25分钟专注，5分钟短休息，15分钟长休息。">
+  <meta name="twitter:card" content="summary">
   <meta name="keywords" content="番茄钟,番茄工作法,专注,时间管理,生产力">
   <meta name="author" content="TimeHub Team">
+
+  <!-- 主题预设：在首次绘制前写入 data-theme，避免刷新时闪白/闪黑。
+       取值逻辑与 js/common.js 保持一致（用户选择 → auto 时跟随系统）。 -->
+  <script>
+    (function () {
+      try {
+        var d = JSON.parse(localStorage.getItem('timehub_data') || '{}');
+        var t = (d.settings && d.settings.theme) || d.theme || 'auto';
+        var dark = t === 'auto' ? matchMedia('(prefers-color-scheme: dark)').matches : t === 'dark';
+        document.documentElement.setAttribute('data-theme', dark ? 'dark' : 'light');
+      } catch (e) { /* 读不到就用 css/base.css 的浅色默认值 */ }
+    })();
+  </script>
 
   <!-- 样式表 -->
   <link rel="stylesheet" href="css/base.css">
   <link rel="stylesheet" href="css/layout.css">
   <link rel="stylesheet" href="css/components.css">
-  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@300;400;500&display=swap">
 
   <!-- 图标 -->
   <link rel="icon" href="assets/icons/pomodoro.svg" type="image/svg+xml">
@@ -20,11 +39,11 @@
   <!-- iOS 支持 -->
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-  <link rel="apple-touch-icon" href="assets/icons/pomodoro.svg">
+  <link rel="apple-touch-icon" href="assets/icons/apple-touch-icon.png">
 
   <!-- PWA 相关 -->
-  <meta name="theme-color" content="#C0392B">
-  <link rel="manifest" href="manifest.json" crossorigin="use-credentials">
+  <meta name="theme-color" content="#4361ee">
+  <link rel="manifest" href="manifest.json">
 
   <!-- 番茄钟特定样式 -->
   <style>
@@ -66,6 +85,7 @@
     /* 模式切换Tab */
     .mode-tabs {
       display: flex;
+      flex-wrap: wrap;
       gap: var(--spacing-md);
       background: var(--surface-color);
       border-radius: var(--border-radius-lg);
@@ -74,8 +94,12 @@
     }
 
     .mode-tab {
-      flex: 1;
-      padding: var(--spacing-md) var(--spacing-lg);
+      /* 按内容宽度分配，并且不低于文字宽度：
+         强行三等分（flex: 1 1 0）会把「短休息」压到 79px，装不下 84px 的文字而出现省略号；
+         真放不下时让它换行，而不是把字切掉 */
+      flex: 1 1 auto;
+      min-width: max-content;
+      padding: var(--spacing-sm) var(--spacing-md);
       border-radius: var(--border-radius-md);
       font-weight: 600;
       text-align: center;
@@ -84,11 +108,9 @@
       border: 2px solid transparent;
       background: transparent;
       color: var(--text-secondary);
-      white-space: normal;
-      min-width: 60px;
-      overflow: visible;
-      word-break: break-word;
-      hyphens: auto;
+      /* 文字一律单行：以前是 white-space:normal + word-break:break-word，
+         窄一点就断成「短休 / 息」，比截断还难看 */
+      white-space: nowrap;
       line-height: 1.3;
       display: flex;
       align-items: center;
@@ -108,11 +130,10 @@
       box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
     }
 
-    @media (prefers-color-scheme: dark) {
-      .mode-tab:hover {
-        background: rgba(255, 255, 255, 0.15);
-        color: white;
-      }
+    /* 深色主题下 hover 用白色薄层（与全站主题开关一致） */
+    [data-theme="dark"] .mode-tab:hover {
+      background: rgba(255, 255, 255, 0.15);
+      color: white;
     }
 
     /* 计时器显示区域 */
@@ -157,7 +178,7 @@
     }
 
     .time-text {
-      font-family: 'DM Mono', monospace;
+      font-family: var(--font-family-mono);
       font-size: 4.5rem;
       font-weight: 500;
       color: var(--text-color);
@@ -311,7 +332,7 @@
       display: flex;
       align-items: center;
       gap: 8px;
-      font-family: 'DM Mono', monospace;
+      font-family: var(--font-family-mono);
       font-size: 18vw;
       font-weight: 500;
       line-height: 1;
@@ -484,24 +505,16 @@
       .mode-tabs {
         flex-direction: row;
         flex-wrap: wrap;
-        gap: var(--spacing-sm);
+        gap: var(--spacing-xs);
       }
 
       .mode-tab {
-        flex: 0 0 calc(33.333% - var(--spacing-sm));
+        flex: 1 1 auto;
+        min-width: max-content;
         padding: var(--spacing-sm) var(--spacing-xs);
         font-size: 0.9rem;
-        white-space: normal;
-        overflow: visible;
-        word-break: break-word;
-        hyphens: auto;
-        min-width: 50px;
-        min-height: 44px;
-        line-height: 1.3;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        text-align: center;
+        min-height: 44px;     /* 移动端点击热区不小于 44px */
+        white-space: nowrap;
       }
     }
 
@@ -520,17 +533,14 @@
       }
 
       .mode-tab {
-        flex: 0 0 calc(50% - var(--spacing-sm));
+        /* 之前是 flex: 0 0 50%，3 个选项卡排成 2+1 的残缺布局；
+           改成按内容宽度排布，3 个字在 320px 宽的屏幕上依然放得下一行 */
+        flex: 1 1 auto;
+        min-width: max-content;
         font-size: 0.85rem;
         padding: var(--spacing-sm) var(--spacing-xs);
         min-height: 40px;
-        line-height: 1.3;
-        word-break: break-word;
-        hyphens: auto;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        text-align: center;
+        white-space: nowrap;
       }
     }
 
@@ -550,8 +560,10 @@
 
     .panel-card-header {
       display: flex;
+      flex-wrap: wrap;
       justify-content: space-between;
       align-items: center;
+      gap: var(--spacing-md);
       margin-bottom: var(--spacing-md);
     }
 
@@ -560,6 +572,19 @@
       font-weight: 700;
       color: var(--text-color);
       margin: 0;
+      white-space: nowrap;   /* 标题绝不换行：曾被右侧控件挤成「任务列 / 表」 */
+      flex: 0 0 auto;
+    }
+
+    /* 任务 Tab 的头部：标题独占一行，输入区在下一行占满宽度。
+       原来是标题和输入框+下拉+按钮挤在同一行，标题被挤断、移动端整块只剩半屏宽 */
+    #tasks-tab .panel-card-header {
+      flex-direction: column;
+      align-items: stretch;
+    }
+
+    #tasks-tab .task-controls {
+      width: 100%;
     }
 
     .panel-card-description {
@@ -568,33 +593,9 @@
       margin: 0 0 var(--spacing-md) 0;
     }
 
-    /* 任务列表样式 */
-    .task-input-container {
-      margin-bottom: var(--spacing-md);
-    }
-
-    .task-input {
-      width: 100%;
-      padding: var(--spacing-sm) var(--spacing-md);
-      border: 2px solid var(--border-color);
-      border-radius: var(--border-radius-md);
-      font-size: 1rem;
-      transition: border-color var(--transition-fast);
-      background: var(--bg-color);
-      color: var(--text-color);
-    }
-
-    .task-input:focus {
-      outline: none;
-      border-color: var(--current-color);
-    }
-
-    .task-input-actions {
-      display: flex;
-      gap: var(--spacing-sm);
-      margin-top: var(--spacing-sm);
-    }
-
+    /* 任务列表样式
+       注意：.task-input / .task-input-group 等只在这里之外定义一次（见「任务Tab样式」段），
+       此前重复定义的 .task-input-container / .task-input-actions 已确认无人使用，已删除。 */
     .task-list {
       list-style: none;
       padding: 0;
@@ -952,16 +953,25 @@
     .task-input-group {
       display: flex;
       gap: var(--spacing-sm);
+      min-width: 0;
     }
 
+    /* 全站唯一一份 .task-input 定义（此前有重复定义互相覆盖，已合并） */
     .task-input {
-      flex: 1;
+      flex: 1 1 auto;
+      min-width: 0;
       padding: var(--spacing-sm) var(--spacing-md);
       border: 2px solid var(--border-color);
       border-radius: var(--border-radius-md);
       font-size: 0.9375rem;
       background: var(--bg-color);
       color: var(--text-color);
+      transition: border-color var(--transition-fast);
+    }
+
+    .task-input:focus {
+      outline: none;
+      border-color: var(--current-color);
     }
 
     .task-category {
@@ -971,6 +981,7 @@
       background: var(--bg-color);
       color: var(--text-color);
       min-width: 80px;
+      flex: 0 0 auto;
     }
 
     .current-tomato {
@@ -1089,7 +1100,7 @@
     .history-time {
       font-size: 0.875rem;
       color: var(--text-color);
-      font-family: 'DM Mono', monospace;
+      font-family: var(--font-family-mono);
     }
 
     .history-task {
@@ -1201,7 +1212,7 @@
     }
 
     .shortcut-key {
-      font-family: 'DM Mono', monospace;
+      font-family: var(--font-family-mono);
       background: var(--bg-color);
       padding: var(--spacing-xs) var(--spacing-sm);
       border-radius: var(--border-radius-sm);
@@ -1719,7 +1730,7 @@
     </div>
   </div>
 
-  <!-- 页脚 -->
+  <!-- 页脚（全站统一，7 个页面共用同一份标记；年份与版本号由 js/common.js 注入） -->
   <footer class="footer">
     <div class="container">
       <div class="footer-content">
@@ -1727,7 +1738,10 @@
           <h3 class="footer-title">TimeHub</h3>
           <p class="footer-description">
             一个简单而强大的时间管理工具集合，帮助您更高效地利用每一分钟。
+            纯前端实现，数据只存在你的浏览器里。
           </p>
+          <!-- 想加仓库/社交链接就放这里，例如：
+               <div class="footer-social"><a class="social-link" href="https://github.com/…">…</a></div> -->
         </div>
 
         <div class="footer-section">
@@ -1744,17 +1758,17 @@
         </div>
 
         <div class="footer-section">
-          <h3 class="footer-title">反馈</h3>
+          <h3 class="footer-title">反馈与支持</h3>
           <p class="footer-description">
-            如果您有任何建议或发现问题，欢迎联系我们。
+            如果您遇到任何问题或有改进建议，欢迎联系我们。
           </p>
           <a href="mailto:support@timehub.example.com" class="btn btn-outline">发送反馈</a>
         </div>
       </div>
 
       <div class="footer-bottom">
-        <p>&copy; <span id="current-year">2024</span> TimeHub. 保留所有权利。</p>
-        <p class="footer-version">版本 <span id="app-version">1.0.0</span></p>
+        <p>&copy; <span data-timehub-year>2026</span> TimeHub. 保留所有权利。</p>
+        <p class="footer-version">版本 <span data-timehub-version>1.1.0</span></p>
       </div>
     </div>
   </footer>
@@ -1767,9 +1781,7 @@
 
   <!-- 内联脚本 -->
   <script>
-    // 设置当前年份和应用版本
-    document.getElementById('current-year').textContent = new Date().getFullYear();
-    document.getElementById('app-version').textContent = TimeHub?.CONSTANTS?.VERSION || '1.0.0';
+    // 年份与版本号由 js/common.js 统一写入（footer 里的 data-timehub-year / data-timehub-version）
 
     // 移动端菜单切换
     document.querySelector('.mobile-menu-btn')?.addEventListener('click', function() {

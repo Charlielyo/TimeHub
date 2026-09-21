@@ -134,9 +134,12 @@
   padding: var(--spacing-sm);
   border: 1px solid var(--border-color);
   border-radius: var(--border-radius-sm);
-  font-family: 'DM Mono', monospace;
+  font-family: var(--font-family-mono);
   font-size: 1rem;
   text-align: center;
+  /* 显式给出配色：否则深色主题下原生输入框会是白底，与卡片割裂 */
+  background: var(--surface-color);
+  color: var(--text-color);
 }
 
 .custom-input:focus {
@@ -287,7 +290,7 @@
 }
 
 .time-count {
-  font-family: 'DM Mono', monospace;
+  font-family: var(--font-family-mono);
   font-size: 2.5rem;
   font-weight: 500;
   color: var(--text-color);
@@ -328,10 +331,8 @@
   border-radius: var(--border-radius-md);
 }
 
-@media (prefers-color-scheme: dark) {
-  .control-settings {
-    background: rgba(255, 255, 255, 0.05);
-  }
+[data-theme="dark"] .control-settings {
+  background: rgba(255, 255, 255, 0.05);
 }
 
 .setting-group {
@@ -356,7 +357,7 @@
   padding: var(--spacing-sm);
   border: 1px solid var(--border-color);
   border-radius: var(--border-radius-sm);
-  font-family: 'DM Mono', monospace;
+  font-family: var(--font-family-mono);
   text-align: center;
   font-size: 1rem;
 }
@@ -386,10 +387,8 @@
   border-color: var(--primary-color);
 }
 
-@media (prefers-color-scheme: dark) {
-  .number-btn:hover {
-    background: rgba(255, 255, 255, 0.1);
-  }
+[data-theme="dark"] .number-btn:hover {
+  background: rgba(255, 255, 255, 0.1);
 }
 
 .toggle-switch {
@@ -446,10 +445,8 @@ input:checked + .toggle-slider:before {
   font-size: 0.9375rem;
 }
 
-@media (prefers-color-scheme: dark) {
-  .current-settings {
-    background: rgba(255, 255, 255, 0.05);
-  }
+[data-theme="dark"] .current-settings {
+  background: rgba(255, 255, 255, 0.05);
 }
 
 .setting-info {
@@ -527,7 +524,7 @@ input:checked + .toggle-slider:before {
   font-size: 1.5rem;
   font-weight: 700;
   color: var(--primary-color);
-  font-family: 'DM Mono', monospace;
+  font-family: var(--font-family-mono);
 }
 
 .completion-message {

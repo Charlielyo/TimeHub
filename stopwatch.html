@@ -5,21 +5,40 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>秒表 - TimeHub</title>
   <meta name="description" content="TimeHub秒表工具，精准计时、记录圈速、支持键盘快捷键。">
+  <!-- 分享卡片：社交平台抓到的标题与摘要
+       og:url / og:image 需要站点正式域名，确定域名后一并补上（现在还缺域名，宁可不写也不写错） -->
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="TimeHub">
+  <meta property="og:title" content="秒表 - TimeHub">
+  <meta property="og:description" content="TimeHub秒表工具，精准计时、记录圈速、支持键盘快捷键。">
+  <meta name="twitter:card" content="summary">
+
+  <!-- 主题预设：在首次绘制前写入 data-theme，避免刷新时闪白/闪黑。
+       取值逻辑与 js/common.js 保持一致（用户选择 → auto 时跟随系统）。 -->
+  <script>
+    (function () {
+      try {
+        var d = JSON.parse(localStorage.getItem('timehub_data') || '{}');
+        var t = (d.settings && d.settings.theme) || d.theme || 'auto';
+        var dark = t === 'auto' ? matchMedia('(prefers-color-scheme: dark)').matches : t === 'dark';
+        document.documentElement.setAttribute('data-theme', dark ? 'dark' : 'light');
+      } catch (e) { /* 读不到就用 css/base.css 的浅色默认值 */ }
+    })();
+  </script>
 
   <link rel="stylesheet" href="css/base.css">
   <link rel="stylesheet" href="css/layout.css">
   <link rel="stylesheet" href="css/components.css">
-  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@300;400;500&display=swap">
   <link rel="icon" href="assets/icons/stopwatch.svg" type="image/svg+xml">
 
   <!-- iOS 支持 -->
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-  <link rel="apple-touch-icon" href="assets/icons/stopwatch.svg">
+  <link rel="apple-touch-icon" href="assets/icons/apple-touch-icon.png">
 
   <!-- PWA 相关 -->
-  <meta name="theme-color" content="#C0392B">
-  <link rel="manifest" href="manifest.json" crossorigin="use-credentials">
+  <meta name="theme-color" content="#4361ee">
+  <link rel="manifest" href="manifest.json">
 
   <style>
     .stopwatch-page {
@@ -41,8 +60,21 @@
       gap: var(--spacing-xl);
     }
 
+    /* 计时卡片：与其它工具页统一的卡片外观 */
+    .sw-card {
+      width: 100%;
+      background: var(--surface-color);
+      border: 1px solid var(--border-color);
+      border-radius: var(--border-radius-lg);
+      padding: var(--spacing-xxl) var(--spacing-xl);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: var(--spacing-xl);
+    }
+
     .sw-display {
-      font-family: 'DM Mono', monospace;
+      font-family: var(--font-family-mono);
       font-size: 5rem;
       font-weight: 500;
       color: var(--text-color);
@@ -121,7 +153,7 @@
     }
 
     .sw-laps-table td {
-      font-family: 'DM Mono', monospace;
+      font-family: var(--font-family-mono);
     }
 
     .sw-laps-table .lap-fast {
@@ -186,23 +218,29 @@
 
   <main class="stopwatch-main">
     <div class="stopwatch-container">
-      <div class="sw-display" id="sw-display" aria-live="polite">
-        00:00<span class="ms">.00</span>
+      <!-- 计时卡片：把数字与控制按钮收进一张卡片，页面不再是"悬空"的
+           （此前这一页只有数字和三个按钮漂在一片空白上，与其它工具页不是一套） -->
+      <div class="sw-card">
+        <div class="sw-display" id="sw-display" aria-live="polite">
+          00:00<span class="ms">.00</span>
+        </div>
+
+        <div class="sw-controls">
+          <button class="btn btn-primary" id="btn-toggle">开始</button>
+          <button class="btn btn-secondary" id="btn-lap" disabled>圈速</button>
+          <button class="btn btn-outline" id="btn-reset">重置</button>
+        </div>
       </div>
 
-      <div class="sw-controls">
-        <button class="btn btn-primary" id="btn-toggle">开始</button>
-        <button class="btn btn-secondary" id="btn-lap" disabled>圈速</button>
-        <button class="btn btn-outline" id="btn-reset">重置</button>
-      </div>
-
-      <div class="sw-laps" id="laps-card" hidden>
+      <!-- 圈速记录：卡片常显，无记录时显示空状态（原先整块隐藏，页面看起来是空的） -->
+      <div class="sw-laps" id="laps-card">
         <div class="sw-laps-header">
           <span class="sw-laps-title">圈速记录</span>
           <button class="btn btn-sm btn-outline" id="btn-copy">复制全部</button>
         </div>
         <div id="laps-body">
-          <table class="sw-laps-table">
+          <p class="sw-laps-empty" id="laps-empty">还没有圈速记录。计时过程中点击「圈速」即可记录分段。</p>
+          <table class="sw-laps-table" id="laps-table" hidden>
             <thead>
               <tr>
                 <th>序号</th>
@@ -217,14 +255,45 @@
     </div>
   </main>
 
+  <!-- 页脚（全站统一，7 个页面共用同一份标记；年份与版本号由 js/common.js 注入） -->
   <footer class="footer">
     <div class="container">
       <div class="footer-content">
-        <p>TimeHub - 简单而强大的时间管理工具</p>
+        <div class="footer-section">
+          <h3 class="footer-title">TimeHub</h3>
+          <p class="footer-description">
+            一个简单而强大的时间管理工具集合，帮助您更高效地利用每一分钟。
+            纯前端实现，数据只存在你的浏览器里。
+          </p>
+          <!-- 想加仓库/社交链接就放这里，例如：
+               <div class="footer-social"><a class="social-link" href="https://github.com/…">…</a></div> -->
+        </div>
+
+        <div class="footer-section">
+          <h3 class="footer-title">快速链接</h3>
+          <ul class="footer-links">
+            <li><a href="index.html">仪表盘</a></li>
+            <li><a href="pomodoro.html">番茄钟</a></li>
+            <li><a href="stopwatch.html">秒表</a></li>
+            <li><a href="countdown.html">多组倒计时</a></li>
+            <li><a href="worldclock.html">世界时钟</a></li>
+            <li><a href="deadline.html">截止倒计时</a></li>
+            <li><a href="breathing.html">呼吸训练</a></li>
+          </ul>
+        </div>
+
+        <div class="footer-section">
+          <h3 class="footer-title">反馈与支持</h3>
+          <p class="footer-description">
+            如果您遇到任何问题或有改进建议，欢迎联系我们。
+          </p>
+          <a href="mailto:support@timehub.example.com" class="btn btn-outline">发送反馈</a>
+        </div>
       </div>
+
       <div class="footer-bottom">
-        <p>&copy; <span id="year"></span> TimeHub</p>
-        <p class="footer-version">版本 1.0.0</p>
+        <p>&copy; <span data-timehub-year>2026</span> TimeHub. 保留所有权利。</p>
+        <p class="footer-version">版本 <span data-timehub-version>1.1.0</span></p>
       </div>
     </div>
   </footer>
@@ -240,7 +309,6 @@
       const btnLap = document.getElementById('btn-lap');
       const btnReset = document.getElementById('btn-reset');
       const btnCopy = document.getElementById('btn-copy');
-      const lapsCard = document.getElementById('laps-card');
       const lapsList = document.getElementById('laps-list');
 
       let state = 'idle'; // idle | running | paused
@@ -313,8 +381,8 @@
         laps = [];
         setState('idle');
         updateDisplay();
-        lapsCard.hidden = true;
         lapsList.innerHTML = '';
+        renderLaps();
       }
 
       function recordLap() {
@@ -327,11 +395,17 @@
       }
 
       function renderLaps() {
+        // 卡片常显：有记录显示表格，没有则显示空状态提示
+        const empty = document.getElementById('laps-empty');
+        const table = document.getElementById('laps-table');
+
         if (laps.length === 0) {
-          lapsCard.hidden = true;
+          empty.hidden = false;
+          table.hidden = true;
           return;
         }
-        lapsCard.hidden = false;
+        empty.hidden = true;
+        table.hidden = false;
 
         const splits = laps.map(l => l.split);
         const minSplit = Math.min(...splits);
@@ -400,7 +474,6 @@
         if (e.target === this) this.classList.remove('show');
       });
 
-      document.getElementById('year').textContent = new Date().getFullYear();
     })();
   </script>
 

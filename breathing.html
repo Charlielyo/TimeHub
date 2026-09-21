@@ -5,15 +5,34 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>呼吸训练 - TimeHub</title>
   <meta name="description" content="TimeHub呼吸训练工具，提供4-7-8呼吸法、方形呼吸法等科学呼吸练习，帮助缓解压力、提升专注力。">
+  <!-- 分享卡片：社交平台抓到的标题与摘要
+       og:url / og:image 需要站点正式域名，确定域名后一并补上（现在还缺域名，宁可不写也不写错） -->
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="TimeHub">
+  <meta property="og:title" content="呼吸训练 - TimeHub">
+  <meta property="og:description" content="TimeHub呼吸训练工具，提供4-7-8呼吸法、方形呼吸法等科学呼吸练习，帮助缓解压力、提升专注力。">
+  <meta name="twitter:card" content="summary">
   <meta name="keywords" content="呼吸训练,4-7-8呼吸,方形呼吸,减压,冥想,专注力">
   <meta name="author" content="TimeHub Team">
+
+  <!-- 主题预设：在首次绘制前写入 data-theme，避免刷新时闪白/闪黑。
+       取值逻辑与 js/common.js 保持一致（用户选择 → auto 时跟随系统）。 -->
+  <script>
+    (function () {
+      try {
+        var d = JSON.parse(localStorage.getItem('timehub_data') || '{}');
+        var t = (d.settings && d.settings.theme) || d.theme || 'auto';
+        var dark = t === 'auto' ? matchMedia('(prefers-color-scheme: dark)').matches : t === 'dark';
+        document.documentElement.setAttribute('data-theme', dark ? 'dark' : 'light');
+      } catch (e) { /* 读不到就用 css/base.css 的浅色默认值 */ }
+    })();
+  </script>
 
   <!-- 样式表 -->
   <link rel="stylesheet" href="css/base.css">
   <link rel="stylesheet" href="css/layout.css">
   <link rel="stylesheet" href="css/components.css">
   <link rel="stylesheet" href="css/breathing.css">
-  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@300;400;500&display=swap">
 
   <!-- 图标 -->
   <link rel="icon" href="assets/icons/breathing.svg" type="image/svg+xml">
@@ -21,11 +40,11 @@
   <!-- iOS 支持 -->
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-  <link rel="apple-touch-icon" href="assets/icons/breathing.svg">
+  <link rel="apple-touch-icon" href="assets/icons/apple-touch-icon.png">
 
   <!-- PWA 相关 -->
-  <meta name="theme-color" content="#C0392B">
-  <link rel="manifest" href="manifest.json" crossorigin="use-credentials">
+  <meta name="theme-color" content="#4361ee">
+  <link rel="manifest" href="manifest.json">
 
   <!-- 呼吸训练特定样式 -->
   <style>
@@ -44,10 +63,9 @@
       transition: background-color var(--transition-normal);
     }
 
-    @media (prefers-color-scheme: dark) {
-      .breathing-page {
-        background: var(--breathing-background-dark);
-      }
+    /* 深色主题背景（用 html[data-theme]，与全站主题开关一致） */
+    [data-theme="dark"] .breathing-page {
+      background: var(--breathing-background-dark);
     }
 
     /* 呼吸训练容器 */
@@ -288,7 +306,7 @@
     </div>
   </main>
 
-  <!-- 页脚 -->
+  <!-- 页脚（全站统一，7 个页面共用同一份标记；年份与版本号由 js/common.js 注入） -->
   <footer class="footer">
     <div class="container">
       <div class="footer-content">
@@ -296,7 +314,10 @@
           <h3 class="footer-title">TimeHub</h3>
           <p class="footer-description">
             一个简单而强大的时间管理工具集合，帮助您更高效地利用每一分钟。
+            纯前端实现，数据只存在你的浏览器里。
           </p>
+          <!-- 想加仓库/社交链接就放这里，例如：
+               <div class="footer-social"><a class="social-link" href="https://github.com/…">…</a></div> -->
         </div>
 
         <div class="footer-section">
@@ -317,11 +338,13 @@
           <p class="footer-description">
             如果您遇到任何问题或有改进建议，欢迎联系我们。
           </p>
+          <a href="mailto:support@timehub.example.com" class="btn btn-outline">发送反馈</a>
         </div>
       </div>
 
       <div class="footer-bottom">
-        <p>&copy; <span id="current-year">2024</span> TimeHub. 保留所有权利。</p>
+        <p>&copy; <span data-timehub-year>2026</span> TimeHub. 保留所有权利。</p>
+        <p class="footer-version">版本 <span data-timehub-version>1.1.0</span></p>
       </div>
     </div>
   </footer>
@@ -334,8 +357,7 @@
 
   <!-- 内联脚本 -->
   <script>
-    // 设置当前年份
-    document.getElementById('current-year').textContent = new Date().getFullYear();
+    // 年份与版本号由 js/common.js 统一写入（footer 里的 data-timehub-year / data-timehub-version）
 
     // 移动端菜单切换
     document.querySelector('.mobile-menu-btn')?.addEventListener('click', function() {
