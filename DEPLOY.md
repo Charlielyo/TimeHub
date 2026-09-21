@@ -15,11 +15,12 @@ TimeHub 是一个纯静态前端时间管理工具网站，包含番茄钟、秒
 1. 登录宝塔面板，进入「文件」管理
 2. 选择网站根目录（如：`/www/wwwroot/timehub.example.com`）
 3. 将 TimeHub 所有文件上传到此目录
-   - 所有 `.html` 文件（7个页面）
+   - 所有 `.html` 文件（7 个工具页 + `404.html` + 2 个旧地址重定向页）
    - `css/` 目录及所有样式文件
    - `js/` 目录及所有 JavaScript 文件
-   - `assets/` 目录及图标资源
+   - `assets/` 目录（图标，含 PWA 用的 PNG）
    - `manifest.json` 和 `sw.js`（PWA 支持）
+   - 建议一并上传 `LICENSE`、`CHANGELOG.md`、`README.md`
 4. 确保文件权限正确：
    ```bash
    chown -R www:www /www/wwwroot/timehub.example.com
@@ -55,15 +56,17 @@ server {
     gzip_min_length 1024;
     gzip_types text/plain text/css text/xml text/javascript application/javascript application/xml+rss application/json;
 
-    # PWA 支持 - Service Worker 作用域
-    location /sw.js {
+    # Service Worker 必须不被缓存，否则用户永远拿不到新版本
+    # 注意用 = 精确匹配：普通前缀匹配（location /sw.js）会输给下面的正则，
+    # 导致 sw.js 被当成普通 JS 缓存 30 天，Service Worker 再也更新不了
+    location = /sw.js {
         add_header Cache-Control "no-cache, no-store, must-revalidate";
         add_header Pragma "no-cache";
         add_header Expires "0";
     }
 
-    # 静态资源缓存
-    location ~* \.(css|js|svg|png|jpg|jpeg|gif|ico)$ {
+    # 静态资源缓存（sw.js 已被上面的精确匹配拦截，不会走到这里）
+    location ~* \.(css|js|svg|png|jpg|jpeg|gif|ico|webp|woff2?)$ {
         expires 30d;
         add_header Cache-Control "public, immutable";
     }
@@ -74,9 +77,17 @@ server {
         add_header Cache-Control "no-store, no-cache, must-revalidate";
     }
 
-    # 单页应用路由支持（防止 404）
+    # 找不到的文件交给 404 页面处理
+    # 注意：不要写成 try_files $uri $uri/ /index.html ——
+    # 那是单页应用（SPA）的写法，会把所有错误地址都当成首页返回 200，
+    # 搜索引擎会判定为"软 404"，对收录不利
     location / {
-        try_files $uri $uri/ /index.html;
+        try_files $uri $uri/ =404;
+    }
+
+    error_page 404 /404.html;
+    location = /404.html {
+        internal;
     }
 
     # 防止访问隐藏文件
@@ -165,9 +176,11 @@ server {
 
 ## 维护更新
 1. 备份原文件后上传新版本
-2. 清除浏览器缓存：`Ctrl+Shift+R`（强制刷新）
-3. 更新 Service Worker 版本号（修改 `sw.js` 中的 `CACHE_NAME`）
-4. 测试所有功能是否正常
+2. **升级版本号**：把 `sw.js` 的 `VERSION` 和 `js/common.js` 里 `CONSTANTS.VERSION` 一起加一（两处要一致）
+   —— 新 Service Worker 安装时才会清掉旧缓存，否则用户拿到的仍是旧 CSS/JS
+3. 强制刷新页面核对：`Ctrl+Shift+R`（macOS 为 `Cmd+Shift+R`）
+4. 在 DevTools → Application → Service Workers 确认新版本已激活
+5. 测试所有功能是否正常
 
 ## 联系方式
 如有部署问题，请检查：
@@ -176,5 +189,5 @@ server {
 3. 项目 GitHub Issues（如有）
 
 ---
-**最后更新：2026年4月**
-**适用版本：TimeHub v1.0**
+**最后更新：2026年9月**
+**适用版本：TimeHub v1.1.0**
